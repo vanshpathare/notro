@@ -1,0 +1,24 @@
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | NAME_REQUIRED"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | record \"new\" has no field \"pan_number\""}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | COLLEGE_REQUIRED_FOR_STUDENTS"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | GSTIN_REQUIRED"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | PAN_REQUIRED"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | Database error creating new user"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | Database error creating new user"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | Database error creating new user"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | Database error creating new user"}
+{"level":"error","message":"verifyMobileOtp | 8788871221 | OTP_EXPIRED"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | PAN_REQUIRED"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | new row for relation \"profiles\" violates check constraint \"profiles_account_type_check\""}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | PAN_REQUIRED"}
+{"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyMobileOtp | 8788871221 | OTP_NOT_FOUND"}
+{"level":"error","message":"updateNote | 1d812a56-2573-498c-a28b-8ca0d1221f01 | NOT_YOUR_NOTE"}

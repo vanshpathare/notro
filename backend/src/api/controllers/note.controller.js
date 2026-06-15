@@ -16,7 +16,7 @@ const createNote = async (req, res) => {
       SUBJECT_REQUIRED: [400, "Subject is required"],
       R2_KEY_REQUIRED: [400, "PDF file must be uploaded first"],
       PRICE_REQUIRED: [400, "Price is required"],
-      PRICE_OUT_OF_RANGE: [400, "Price must be between ₹10 and ₹999"],
+      PRICE_OUT_OF_RANGE: [400, "Price must be atleast ₹5"],
       PAGE_COUNT_REQUIRED: [400, "Page count is required"],
       DECLARATION_REQUIRED: [
         400,
@@ -28,6 +28,10 @@ const createNote = async (req, res) => {
       ACCOUNT_PENDING_VERIFICATION: [
         403,
         "Your account is pending verification",
+      ],
+      PREVIEW_PAGES_EXCEED_TOTAL: [
+        400,
+        "Preview pages cannot exceed the total page count of the document",
       ],
     };
     const [status, message] = map[err.message] || [
@@ -85,8 +89,12 @@ const updateNote = async (req, res) => {
       NOTE_NOT_FOUND: [404, "Note not found"],
       NOT_YOUR_NOTE: [403, "You can only edit your own notes"],
       NO_VALID_FIELDS: [400, "No valid fields to update"],
-      PRICE_OUT_OF_RANGE: [400, "Price must be between ₹10 and ₹999"],
+      PRICE_OUT_OF_RANGE: [400, "Price must be atleast ₹5"],
       TOO_MANY_PREVIEW_PAGES: [400, "Maximum 4 preview pages allowed"],
+      PREVIEW_PAGES_EXCEED_TOTAL: [
+        400,
+        "Preview pages cannot exceed the total page count of the document",
+      ],
     };
     const [status, message] = map[err.message] || [
       500,

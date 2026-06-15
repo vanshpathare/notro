@@ -22,3 +22,9 @@
 {"level":"error","message":"verifyEmailAndRegister | notropy.app@gmail.com | EMAIL_ALREADY_EXISTS"}
 {"level":"error","message":"verifyMobileOtp | 8788871221 | OTP_NOT_FOUND"}
 {"level":"error","message":"updateNote | 1d812a56-2573-498c-a28b-8ca0d1221f01 | NOT_YOUR_NOTE"}
+{"level":"error","message":"verifyUpload | bd87b5d5-3446-4eef-a423-8c43eae61e1d | pdfParse is not a function"}
+{"level":"error","message":"verifyUpload | bd87b5d5-3446-4eef-a423-8c43eae61e1d | parsePDF is not a function"}
+{"level":"error","message":"createOrder | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | NOTE_NOT_FOUND"}
+{"level":"error","message":"createOrder | bd87b5d5-3446-4eef-a423-8c43eae61e1d | CANNOT_BUY_OWN_NOTE"}
+{"level":"error","message":"createOrder | bd87b5d5-3446-4eef-a423-8c43eae61e1d | CANNOT_BUY_OWN_NOTE"}
+{"level":"error","message":"verifyPayment | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | INVALID_SIGNATURE"}

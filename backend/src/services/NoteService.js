@@ -27,8 +27,7 @@ const createNote = async (sellerId, noteData) => {
   if (price === undefined || isNaN(price)) throw new Error("PRICE_REQUIRED");
 
   const parsedPrice = parseFloat(price);
-  if (parsedPrice < 10 || parsedPrice > 999)
-    throw new Error("PRICE_OUT_OF_RANGE");
+  if (parsedPrice < 5) throw new Error("PRICE_OUT_OF_RANGE");
   if (!seller_declaration) throw new Error("DECLARATION_REQUIRED");
   if (!page_count || parseInt(page_count) < 1)
     throw new Error("PAGE_COUNT_REQUIRED");
@@ -36,6 +35,9 @@ const createNote = async (sellerId, noteData) => {
   // Validate preview pages — max 4 as per constraint
   if (preview_pages && preview_pages.length > 4) {
     throw new Error("TOO_MANY_PREVIEW_PAGES");
+  }
+  if (preview_pages && preview_pages.length > totalPages) {
+    throw new Error("PREVIEW_PAGES_EXCEED_TOTAL");
   }
 
   // ── Check seller status & verification ──
@@ -286,14 +288,23 @@ const updateNote = async (noteId, sellerId, updates) => {
 
   if (filteredUpdates.price !== undefined) {
     const p = parseFloat(filteredUpdates.price);
-    if (isNaN(p) || p < 10 || p > 999) throw new Error("PRICE_OUT_OF_RANGE");
+    if (isNaN(p) || p < 5) throw new Error("PRICE_OUT_OF_RANGE");
   }
 
-  if (
-    filteredUpdates.preview_pages &&
-    filteredUpdates.preview_pages.length > 4
-  ) {
-    throw new Error("TOO_MANY_PREVIEW_PAGES");
+  if (filteredUpdates.preview_pages) {
+    if (filteredUpdates.preview_pages.length > 4) {
+      throw new Error("TOO_MANY_PREVIEW_PAGES");
+    }
+
+    // Determine total pages available (either from the incoming update payload or the database row)
+    const activeTotalPages =
+      filteredUpdates.page_count !== undefined
+        ? parseInt(filteredUpdates.page_count)
+        : note.page_count;
+
+    if (filteredUpdates.preview_pages.length > activeTotalPages) {
+      throw new Error("PREVIEW_PAGES_EXCEED_TOTAL");
+    }
   }
 
   // Fields that trigger re-review if changed

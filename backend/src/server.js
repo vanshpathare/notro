@@ -35,6 +35,9 @@ app.use("/api/auth", require("./api/routes/auth.routes"));
 app.use("/api/notes", require("./api/routes/note.routes"));
 app.use("/api/upload", require("./api/routes/upload.routes"));
 app.use("/api/payments", require("./api/routes/payment.routes"));
+app.use("/api/licence", require("./api/routes/licence.routes"));
+app.use("/api/sellers", require("./api/routes/seller.routes"));
+app.use("/api/users", require("./api/routes/user.routes"));
 // app.use('/api/wallet', require('./api/routes/earnings'));
 
 const PORT = process.env.PORT || 5000; // Using 5000 to keep 3000 open for React testing if needed

@@ -1,5 +1,6 @@
 const supabase = require("../../config/supabase.js");
 const logger = require("../../utils/logger");
+const SellerService = require("../../services/SellerService");
 
 const getMyProfile = async (req, res) => {
   try {
@@ -87,4 +88,27 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
-module.exports = { getMyProfile, updateMyProfile };
+const becomeSeller = async (req, res) => {
+  try {
+    const updated = await SellerService.becomeSeller(req.user.id);
+    return res.json({
+      success: true,
+      message: "You are now a seller",
+      user: updated,
+    });
+  } catch (err) {
+    logger.error(`becomeSeller | ${req.user?.id} | ${err.message}`);
+    const map = {
+      USER_NOT_FOUND: [404, "User not found"],
+      ALREADY_SELLER: [409, "You are already a seller"],
+      NOT_APPLICABLE: [400, "This action is only for student accounts"],
+    };
+    const [status, message] = map[err.message] || [
+      500,
+      "Failed to update account",
+    ];
+    return res.status(status).json({ error: message });
+  }
+};
+
+module.exports = { getMyProfile, updateMyProfile, becomeSeller };

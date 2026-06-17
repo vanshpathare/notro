@@ -28,3 +28,8 @@
 {"level":"error","message":"createOrder | bd87b5d5-3446-4eef-a423-8c43eae61e1d | CANNOT_BUY_OWN_NOTE"}
 {"level":"error","message":"createOrder | bd87b5d5-3446-4eef-a423-8c43eae61e1d | CANNOT_BUY_OWN_NOTE"}
 {"level":"error","message":"verifyPayment | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | INVALID_SIGNATURE"}
+{"level":"error","message":"createOrder | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | ALREADY_PURCHASED"}
+{"level":"error","message":"followSeller | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | ALREADY_FOLLOWING"}
+{"level":"error","message":"followSeller | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | CANNOT_FOLLOW_SELF"}
+{"level":"error","message":"becomeSeller | bd87b5d5-3446-4eef-a423-8c43eae61e1d | record \"new\" has no field \"pan_number\""}
+{"level":"error","message":"becomeSeller | bd87b5d5-3446-4eef-a423-8c43eae61e1d | ALREADY_SELLER"}

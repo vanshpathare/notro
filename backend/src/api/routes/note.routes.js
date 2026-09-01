@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const supabase = require("../../config/supabase.js"); // Aligned to use Supabase core engine
+const supabase = require("../../config/supabase.js");
 const jwt = require("jsonwebtoken");
+const R2Service = require("../../services/R2Service");
 
 const {
   createNote,
@@ -17,10 +18,8 @@ const {
   getPreviewUrl,
 } = require("../controllers/upload.controller");
 
-// 🎯 FIX 1: Point to your correct standalone middleware filepath
 const verifyAuthSession = require("../middlewares/authMiddleware");
 
-// ── Helper: Optional Auth — 🎯 FIX 3: Aligned cookie key to 'sb_access_token' using Supabase Engine
 const optionalAuth = (req, res, next) => {
   const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
   if (token) {
@@ -36,19 +35,73 @@ const optionalAuth = (req, res, next) => {
   next();
 };
 
-// ── Public routes ──
-router.get("/", getNotes);
-router.get("/:id/preview-url", getPreviewUrl);
+// ── Public routes (no :id pattern — must come first) ──
+router.get("/", optionalAuth, getNotes); // ← added optionalAuth
 
-// ── Protected routes — 🎯 FIX 2: Moved seller tracking endpoints ABOVE /:id pathing to block hijacking
+// ── Seller-specific routes (must come before /:id) ──
 router.get("/seller/my-listings", verifyAuthSession, getMyListings);
-router.get("/:id/analytics", verifyAuthSession, getNoteAnalytics);
-router.get("/:id/download-url", verifyAuthSession, getDownloadUrl); // Requires verified purchase tracking
 
-// ── Optional auth route ──
+// ── Routes with specific :id sub-paths (must come before plain /:id) ──
+router.get("/:id/preview-url", getPreviewUrl);
+router.get("/:id/download-url", verifyAuthSession, getDownloadUrl);
+router.get("/:id/analytics", verifyAuthSession, getNoteAnalytics);
+
+// ── Share meta — public, no auth needed ──
+router.get("/:id/share-meta", async (req, res) => {
+  try {
+    const { data: note, error } = await supabase
+      .from("notes")
+      .select(
+        `
+        id, title, description, price, subject,
+        cover_image_key, purchase_count, average_rating,
+        seller:profiles!seller_id ( name )
+      `,
+      )
+      .eq("id", req.params.id)
+      .eq("status", "approved")
+      .eq("is_deleted", false)
+      .single();
+
+    if (error || !note)
+      return res.status(404).json({ error: "Note not found" });
+
+    // Cover image — if stored as public URL use directly, else sign it
+    let coverUrl = null;
+    if (note.cover_image_key) {
+      if (note.cover_image_key.startsWith("http")) {
+        coverUrl = note.cover_image_key; // permanent public URL
+      } else {
+        coverUrl = await R2Service.generateImageViewUrl(note.cover_image_key);
+      }
+    }
+
+    return res.json({
+      success: true,
+      meta: {
+        title: note.title,
+        description:
+          note.description || `${note.subject} notes by ${note.seller?.name}`,
+        price: note.price,
+        seller: note.seller?.name,
+        purchase_count: note.purchase_count,
+        average_rating: note.average_rating,
+        cover_url: coverUrl,
+        share_url: `https://educrit.in/notes/${note.id}`,
+        whatsapp_text:
+          `📚 *${note.title}*\nBy ${note.seller?.name}\n💰 ₹${note.price}` +
+          `\n⭐ ${note.average_rating} rating\n\nGet it here: https://educrit.in/notes/${note.id}`,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to generate share metadata" });
+  }
+});
+
+// ── Plain /:id route — must come LAST among GET routes ──
 router.get("/:id", optionalAuth, getNoteById);
 
-// ── Protected Mutations ──
+// ── Protected mutations ──
 router.post("/", verifyAuthSession, createNote);
 router.patch("/:id", verifyAuthSession, updateNote);
 

@@ -20,4 +20,16 @@ const r2 = new S3Client({
 
 console.log("Cloudflare R2 client ready");
 
+const r2Public = new S3Client({
+  region: "auto",
+  endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId,
+    secretAccessKey,
+  },
+});
+
+console.log("Cloudflare R2 public client ready");
+
 module.exports = r2;
+module.exports.r2Public = r2Public;

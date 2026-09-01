@@ -7,9 +7,24 @@ const {
   verifyMobileOtp,
   sendEmailVerificationCode,
   verifyEmailAndRegister,
+  reactivateAccount,
 } = require("../controllers/auth.controller"); // 💡 Aligned names perfectly with your controller!
 
 const authRateLimiter = require("../middlewares/rateLimiter");
+const authMiddleware = require("../middlewares/authMiddleware");
+
+// POST /api/auth/logout
+router.post("/logout", authMiddleware, async (req, res) => {
+  try {
+    await supabase
+      .from("profiles")
+      .update({ fcm_token: null })
+      .eq("id", req.user.id);
+    return res.json({ success: true });
+  } catch (_) {
+    return res.json({ success: true }); // Fail silently — logout always succeeds
+  }
+});
 
 // 📱 Phone Verification Routes
 router.post("/send-otp", sendMobileOtp);
@@ -18,5 +33,7 @@ router.post("/verify-otp", verifyMobileOtp);
 // 📧 Email Verification Routes
 router.post("/send-email-otp", sendEmailVerificationCode);
 router.post("/verify-email-register", verifyEmailAndRegister);
+
+router.post("/reactivate", authRateLimiter, reactivateAccount);
 
 module.exports = router;

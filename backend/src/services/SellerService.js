@@ -152,25 +152,32 @@ const unfollowSeller = async (followerId, sellerId) => {
 // ─────────────────────────────────────
 // Become a seller (students only — flips is_seller flag)
 // ─────────────────────────────────────
-const becomeSeller = async (userId) => {
+
+const becomeSeller = async (userId, upiId) => {
+  if (!upiId?.trim()) throw new Error("UPI_ID_REQUIRED");
+
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("account_type, is_seller")
+    .select("account_type, is_seller, extra_details")
     .eq("id", userId)
     .single();
 
   if (error || !profile) throw new Error("USER_NOT_FOUND");
-
   if (profile.is_seller) throw new Error("ALREADY_SELLER");
+  if (profile.account_type !== "student") throw new Error("NOT_APPLICABLE");
 
-  // Business/YouTube accounts are already sellers from registration
-  if (profile.account_type !== "student") {
-    throw new Error("NOT_APPLICABLE");
-  }
+  // Merge upi_id into existing extra_details (preserves college etc.)
+  const updatedExtraDetails = {
+    ...(profile.extra_details || {}),
+    upi_id: upiId.trim(),
+  };
 
   const { data: updated, error: updateError } = await supabase
     .from("profiles")
-    .update({ is_seller: true })
+    .update({
+      is_seller: true,
+      extra_details: updatedExtraDetails,
+    })
     .eq("id", userId)
     .select()
     .single();

@@ -33,3 +33,105 @@
 {"level":"error","message":"followSeller | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | CANNOT_FOLLOW_SELF"}
 {"level":"error","message":"becomeSeller | bd87b5d5-3446-4eef-a423-8c43eae61e1d | record \"new\" has no field \"pan_number\""}
 {"level":"error","message":"becomeSeller | bd87b5d5-3446-4eef-a423-8c43eae61e1d | ALREADY_SELLER"}
+{"level":"error","message":"verifyEmailAndRegister | youtube.test@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"becomeSeller | 7c586693-1c1f-48d6-a5f8-03c87309826f | NOT_APPLICABLE"}
+{"level":"error","message":"verifyEmailAndRegister | youtube.test@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"sendEmailOtp | youtube.test@gmail.com | REGISTRATION_TOKEN_EXPIRED"}
+{"level":"error","message":"verifyEmailAndRegister | youtube.test@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | youtube2.test@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | youtube2.test@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyMobileOtp | 9503096450 | OTP_INVALID"}
+{"level":"error","message":"verifyEmailAndRegister | youtube10.test@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | youtube100.test@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | youtube100.test@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | youtube.test100@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | yt@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | vanshpathare100@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | vanshpathare100@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | vanshpathare100@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | vanshpathare1000@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | youtube.test10@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | youtube.test10@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"verifyEmailAndRegister | youtest@gmail.com | Database error creating new user"}
+{"level":"error","message":"verifyEmailAndRegister | ytest@gmail.com | Database error creating new user"}
+{"level":"error","message":"verifyEmailAndRegister | ytest2@gmail.com | Database error creating new user"}
+{"level":"error","message":"verifyEmailAndRegister | youtube.test17@gmail.com | Database error creating new user"}
+{"level":"error","message":"verifyEmailAndRegister | student.test2@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | student.test.final@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | student.test.final2@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"verifyEmailAndRegister | youtube.test.final@gmail.com | EMAIL_OTP_INVALID"}
+{"level":"error","message":"verifyEmailAndRegister | youtube.test.final@gmail.com | EMAIL_ALREADY_EXISTS"}
+{"level":"error","message":"submitRating | 425fb72f-1bae-4ccf-95b4-e22aa1a18bf2 | PURCHASE_REQUIRED"}
+{"level":"error","message":"submitRating | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | ALREADY_RATED"}
+{"level":"error","message":"submitRating | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | INVALID_STARS"}
+{"level":"error","message":"becomeSeller | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | Cannot destructure property 'upiId' of 'req.body' as it is undefined."}
+{"level":"error","message":"becomeSeller | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | ALREADY_SELLER"}
+{"level":"error","message":"requestWithdrawal | bd87b5d5-3446-4eef-a423-8c43eae61e1d | UPI_ID_REQUIRED"}
+{"level":"error","message":"becomeSeller | bd87b5d5-3446-4eef-a423-8c43eae61e1d | ALREADY_SELLER"}
+{"level":"error","message":"requestWithdrawal | bd87b5d5-3446-4eef-a423-8c43eae61e1d | REQUEST_ALREADY_PENDING"}
+{"level":"error","message":"requestWithdrawal | bd87b5d5-3446-4eef-a423-8c43eae61e1d | REQUEST_ALREADY_PENDING"}
+{"level":"error","message":"requestWithdrawal | bd87b5d5-3446-4eef-a423-8c43eae61e1d | AMOUNT_TOO_LOW"}
+{"level":"error","message":"getNotes | requestingUserId is not defined"}
+{"level":"error","message":"getNotes | supabase.from(...).insert(...).catch is not a function"}
+{"level":"error","message":"submitReport | 556bf70c-cc76-4702-9e4e-e65cfe823975 | ALREADY_REPORTED"}
+{"level":"error","message":"submitReport | 556bf70c-cc76-4702-9e4e-e65cfe823975 | INVALID_REASON"}
+{"level":"error","message":"submitReport | 556bf70c-cc76-4702-9e4e-e65cfe823975 | ALREADY_REPORTED"}
+{"level":"error","message":"deleteNote | 1d812a56-2573-498c-a28b-8ca0d1221f01 | NoteService is not defined"}
+{"level":"error","message":"checkLicence | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | purchaseError is not defined"}
+{"level":"error","message":"reactivateAccount | bd87b5d5-3446-4eef-a423-8c43eae61e1d | PENDING_SETTLEMENT_REQUIRED"}
+{"level":"error","message":"reactivateAccount | bd87b5d5-3446-4eef-a423-8c43eae61e1d | ACCOUNT_PERMANENTLY_SUSPENDED"}
+{"level":"error","message":"sendMobileOtp | 8788871221 | ACCOUNT_BANNED"}
+{"level":"error","message":"verifyMobileOtp | 8788871221 | OTP_EXPIRED"}
+{"level":"error","message":"verifyMobileOtp | 8788871221 | OTP_EXPIRED"}
+{"level":"error","message":"verifyMobileOtp | 8788871221 | ACCOUNT_PERMANENTLY_SUSPENDED"}
+{"level":"error","message":"getCoverUploadUrl | bd87b5d5-3446-4eef-a423-8c43eae61e1d | Cannot read properties of undefined (reading 'extension')"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TITLE_TOO_LONG"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TITLE_TOO_LONG"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TITLE_TOO_LONG"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TITLE_TOO_LONG"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TITLE_TOO_LONG"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TITLE_TOO_LONG"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | DESCRIPTION_TOO_LONG"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | INDEX_TOO_LONG"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TOO_MANY_TAGS"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TAG_TOO_LONG"}
+{"level":"error","message":"createNote | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TITLE_TOO_LONG"}
+{"level":"error","message":"updateNote | 1c1a011c-d7b4-46c4-bcf8-0cc8069028c2 | wasApproved is not defined"}
+{"level":"error","message":"[FCM] Delivery Failed for \"Updated Title test 5\". Reason: SEND_FAILED | Error: The registration token is not a valid FCM registration token"}
+{"level":"error","message":"sendMobileOtp | 8788871221 | TypeError: fetch failed"}
+{"level":"error","message":"sendMobileOtp | 8788871221 | TypeError: fetch failed"}
+{"level":"error","message":"sendMobileOtp | 8788871221 | TypeError: fetch failed"}
+{"level":"error","message":"sendMobileOtp | 8788871221 | TypeError: fetch failed"}
+{"level":"error","message":"sendMobileOtp | 8788871221 | TypeError: fetch failed"}
+{"level":"error","message":"verifyMobileOtp | 8788871221 | OTP_INVALID"}
+{"level":"error","message":"verifyMobileOtp | 8788871221 | OTP_EXPIRED"}
+{"level":"error","message":"verifyMobileOtp | 8788871221 | OTP_INVALID"}
+{"level":"error","message":"verifyEmailAndRegister | vanshbhai@gmail.com | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"getNoteById | 830c9a72-c930-4590-a42e-21fcae861078 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | f3099144-c770-4ed2-acac-0864f3347377 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | f3099144-c770-4ed2-acac-0864f3347377 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | 830c9a72-c930-4590-a42e-21fcae861078 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | f3099144-c770-4ed2-acac-0864f3347377 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | f3099144-c770-4ed2-acac-0864f3347377 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | 830c9a72-c930-4590-a42e-21fcae861078 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | 830c9a72-c930-4590-a42e-21fcae861078 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | 830c9a72-c930-4590-a42e-21fcae861078 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | 55208ecb-8ded-4544-9cf1-3adfc2c6bbdb | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | 55208ecb-8ded-4544-9cf1-3adfc2c6bbdb | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | f3099144-c770-4ed2-acac-0864f3347377 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | 29c7433b-f926-47b5-8952-377ae9d77920 | NOTE_NOT_FOUND"}
+{"level":"error","message":"updateNote | 29c7433b-f926-47b5-8952-377ae9d77920 | NO_VALID_FIELDS"}
+{"level":"error","message":"getNoteById | 19e8cbd3-ba0b-4302-bee4-d4f87f2fded8 | NOTE_NOT_FOUND"}
+{"level":"error","message":"submitRating | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | ALREADY_RATED"}
+{"level":"error","message":"submitReport | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | new row for relation \"content_reports\" violates check constraint \"content_reports_reason_check\""}
+{"level":"error","message":"submitReport | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | ALREADY_REPORTED"}
+{"level":"error","message":"submitReport | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | ALREADY_REPORTED"}
+{"level":"error","message":"getMyProfile | 60615a6b-f648-436f-9669-ad9f1703d5b5 | TypeError: fetch failed"}
+{"level":"error","message":"getNoteById | b75fd5b2-3332-4716-82a4-56e6dedb917f | NOTE_NOT_FOUND"}
+{"level":"error","message":"reactivateAccount | PENDING_SETTLEMENT_REQUIRED"}
+{"level":"error","message":"reactivateAccount | EMAIL_OTP_NOT_FOUND"}
+{"level":"error","message":"requestWithdrawal | bd87b5d5-3446-4eef-a423-8c43eae61e1d | REQUEST_ALREADY_PENDING"}
+{"level":"error","message":"sendMobileOtp | 8788871221 | RATE_LIMIT_EXCEEDED"}
+{"level":"error","message":"getNoteById | f3099144-c770-4ed2-acac-0864f3347377 | NoteService.recordView is not a function"}
+{"level":"error","message":"getNoteById | f3099144-c770-4ed2-acac-0864f3347377 | NoteService.recordView is not a function"}
+{"level":"error","message":"getNoteById | 9a33066a-e6b7-4a2c-98c8-d5a8e441b97f | NoteService.recordView is not a function"}

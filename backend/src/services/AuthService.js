@@ -27,7 +27,9 @@ const sendOtp = async (phone) => {
     .eq("phone", phone)
     .maybeSingle();
 
-  if (profile?.is_banned) throw new Error("ACCOUNT_BANNED");
+  if (profile?.is_banned && profile?.deletion_type === "admin_banned") {
+    throw new Error("ACCOUNT_BANNED");
+  }
 
   // Rate limit — max 3 OTPs per 10 minutes per phone
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -100,12 +102,33 @@ const verifyOtp = async (phone, code) => {
     .maybeSingle();
 
   if (existingProfile) {
-    // Update phone_verified in case it was false
-    await supabase
-      .from("profiles")
-      .update({ phone_verified: true })
-      .eq("id", existingProfile.id);
+    // Check if account is deleted (self-deleted only, not admin banned)
+    if (
+      existingProfile.is_deleted &&
+      existingProfile.deletion_type === "self_deleted"
+    ) {
+      // Issue a reactivation token — requires email OTP next
+      const reactivationToken = jwt.sign(
+        { phone, user_id: existingProfile.id, purpose: "reactivation" },
+        process.env.JWT_SECRET,
+        { expiresIn: "30m" },
+      );
+      return {
+        isNewUser: false,
+        requiresReactivation: true,
+        reactivationToken,
+      };
+    }
 
+    // Admin banned — block completely
+    if (
+      existingProfile.is_deleted &&
+      existingProfile.deletion_type === "admin_banned"
+    ) {
+      throw new Error("ACCOUNT_PERMANENTLY_SUSPENDED");
+    }
+
+    // Normal existing user login
     const token = jwt.sign(
       {
         id: existingProfile.id,
@@ -115,11 +138,7 @@ const verifyOtp = async (phone, code) => {
       process.env.JWT_SECRET,
       { expiresIn: "30d" },
     );
-    return {
-      isNewUser: false,
-      token,
-      user: { ...existingProfile, phone_verified: true },
-    };
+    return { isNewUser: false, token, user: existingProfile };
   }
 
   // New user — clean up any ghost auth users for this phone before proceeding
@@ -461,10 +480,96 @@ const completeEmailVerification = async (
   return { token, user: newProfile };
 };
 
+const reactivateAccount = async (reactivationToken, email, code) => {
+  // Verify reactivation token
+  let decoded;
+  try {
+    decoded = jwt.verify(reactivationToken, process.env.JWT_SECRET);
+  } catch {
+    throw new Error("REACTIVATION_TOKEN_EXPIRED");
+  }
+
+  if (decoded.purpose !== "reactivation") throw new Error("INVALID_TOKEN");
+
+  const userId = decoded.user_id;
+
+  // Verify email OTP
+  const { data: otpRecord } = await supabase
+    .from("email_otps")
+    .select("*")
+    .eq("email", email)
+    .eq("is_used", false)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!otpRecord) throw new Error("EMAIL_OTP_NOT_FOUND");
+  if (otpRecord.attempts >= 5) throw new Error("EMAIL_MAX_ATTEMPTS");
+  if (Date.now() > new Date(otpRecord.expires_at).getTime())
+    throw new Error("EMAIL_OTP_EXPIRED");
+
+  const isMatch = await bcrypt.compare(code, otpRecord.code);
+  if (!isMatch) {
+    await supabase
+      .from("email_otps")
+      .update({ attempts: otpRecord.attempts + 1 })
+      .eq("id", otpRecord.id);
+    throw new Error("EMAIL_OTP_INVALID");
+  }
+
+  await supabase
+    .from("email_otps")
+    .update({ is_used: true })
+    .eq("id", otpRecord.id);
+
+  // Check no pending settlement
+  const { data: wallet } = await supabase
+    .from("wallets")
+    .select("pending_payout")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (wallet && parseFloat(wallet.pending_payout) > 0) {
+    throw new Error("PENDING_SETTLEMENT_REQUIRED");
+  }
+
+  // Restore account
+  await supabase
+    .from("profiles")
+    .update({ is_deleted: false, is_banned: false, deletion_type: null })
+    .eq("id", userId);
+
+  // Restore their notes
+  await supabase
+    .from("notes")
+    .update({ is_deleted: false, status: "pending" }) // re-review after reactivation
+    .eq("seller_id", userId);
+
+  // Issue new session token
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  const token = jwt.sign(
+    {
+      id: profile.id,
+      phone: profile.phone,
+      account_type: profile.account_type,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "30d" },
+  );
+
+  return { token, user: profile };
+};
+
 module.exports = {
   sendOtp,
   verifyOtp,
   sendEmailOtp,
   completeEmailVerification,
   getCommissionRate,
+  reactivateAccount,
 };

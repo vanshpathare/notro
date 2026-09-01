@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const razorpay = require("../config/razorpay.js");
 const supabase = require("../config/supabase.js");
+const { notifySellerOfSale } = require("../utils/notifications.js");
 
 const getCommissionRate = (accountType) =>
   accountType === "student" ? 20.0 : 12.0;
@@ -160,7 +161,7 @@ const finalizePurchase = async (orderId, paymentId) => {
   // Track sales count directly inside notes table metrics
   const { data: note } = await supabase
     .from("notes")
-    .select("purchase_count")
+    .select("purchase_count, title")
     .eq("id", purchase.note_id)
     .single();
 
@@ -173,6 +174,16 @@ const finalizePurchase = async (orderId, paymentId) => {
   await creditSellerWallet(
     purchase.seller_id,
     parseFloat(purchase.seller_earning),
+  );
+
+  const noteTitle = note?.title || "your note";
+
+  notifySellerOfSale(
+    purchase.seller_id,
+    noteTitle,
+    parseFloat(purchase.seller_earning),
+  ).catch((err) =>
+    console.error("⚠️ Wallet Transaction Notification Error:", err.message),
   );
 
   return { alreadyProcessed: false, purchase: updated };

@@ -137,3 +137,19 @@
 {"level":"error","message":"getNoteById | f3099144-c770-4ed2-acac-0864f3347377 | NoteService.recordView is not a function"}
 {"level":"error","message":"getNoteById | f3099144-c770-4ed2-acac-0864f3347377 | NoteService.recordView is not a function"}
 {"level":"error","message":"getNoteById | 9a33066a-e6b7-4a2c-98c8-d5a8e441b97f | NoteService.recordView is not a function"}
+{"level":"error","message":"getNotes | TypeError: fetch failed"}
+{"level":"error","message":"getNotes | TypeError: fetch failed"}
+{"level":"error","message":"getNotes | TypeError: fetch failed"}
+{"level":"error","message":"followSeller | bd87b5d5-3446-4eef-a423-8c43eae61e1d | CANNOT_FOLLOW_SELF"}
+{"level":"error","message":"getNotes | TypeError: fetch failed"}
+{"level":"error","message":"updateFcmToken | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TypeError: fetch failed"}
+{"level":"error","message":"getNotes | TypeError: fetch failed"}
+{"level":"error","message":"getNotes | TypeError: fetch failed"}
+{"level":"error","message":"getNotes | Bad Gateway"}
+{"level":"error","message":"updateFcmToken | bd87b5d5-3446-4eef-a423-8c43eae61e1d | Bad Gateway"}
+{"level":"error","message":"getNotes | Bad Gateway"}
+{"level":"error","message":"getNoteById | cd1a4500-c38d-4144-9b05-94b4174a6047 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNotes | TypeError: fetch failed"}
+{"level":"error","message":"getNoteById | cd1a4500-c38d-4144-9b05-94b4174a6047 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | cd1a4500-c38d-4144-9b05-94b4174a6047 | NOTE_NOT_FOUND"}
+{"level":"error","message":"getNoteById | cd1a4500-c38d-4144-9b05-94b4174a6047 | NOTE_NOT_FOUND"}

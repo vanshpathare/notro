@@ -1,16 +1,14 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ReactNode } from 'react'
 import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
-import Footer from './components/Footer'
 import BottomNav from './components/BottomNav'
 import ProtectedRoute from './components/ProtectedRoute'
 import OtpVerification from './pages/OtpVerification'
 
 import Home from './pages/Home'
-import Notes from './pages/Notes'
 import NoteDetail from './pages/NoteDetail'
 import PreviewPdf from './pages/PreviewPdf'
 import SellerProfile from './pages/SellerProfile'
@@ -30,6 +28,7 @@ import AdminWithdrawals from './pages/admin/AdminWithdrawals'
 import AdminReports from './pages/admin/AdminReports'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminOrphans from './pages/admin/AdminOrphans'
+
 
 import './styles/global.css'
 
@@ -72,22 +71,40 @@ export interface RazorpayInstance {
 }
 
 function Layout({ children }: { children: ReactNode }) {
+    const location = useLocation()
+
+    // Routes where desktop sidebar should be completely hidden
+    const hideSidebarRoutes = ['/register', '/login']
+    const shouldHideSidebar = hideSidebarRoutes.includes(location.pathname) || location.pathname.startsWith('/otp')
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Navbar />
             <div style={{ display: 'flex', flex: 1, width: '100%', position: 'relative' }}>
-                {/* Sidebar shows on desktop and tablet */}
-                <div className="desktop-sidebar-wrapper">
-                    <Sidebar />
-                </div>
-                <main style={{ flex: 1, minHeight: 'calc(100vh - 64px)', overflowX: 'hidden', paddingBottom: '80px' }}>
+                {/* Desktop sidebar hidden during auth/registration flows */}
+                {!shouldHideSidebar && (
+                    <div className="desktop-sidebar-wrapper">
+                        <Sidebar />
+                    </div>
+                )}
+                <main style={{
+                    flex: 1,
+                    minHeight: 'calc(100vh - 64px)',
+                    overflowX: 'hidden',
+                    paddingBottom: shouldHideSidebar ? '0' : '80px',
+                    display: shouldHideSidebar ? 'flex' : 'block',
+                    alignItems: shouldHideSidebar ? 'center' : 'initial',
+                    justifyContent: shouldHideSidebar ? 'center' : 'initial'
+                }}>
                     {children}
                 </main>
             </div>
-            {/* BottomNav hidden on tablet and laptop via CSS */}
-            <div className="mobile-bottom-nav-wrapper">
-                <BottomNav />
-            </div>
+            {/* BottomNav hidden on auth pages as well */}
+            {!shouldHideSidebar && (
+                <div className="mobile-bottom-nav-wrapper">
+                    <BottomNav />
+                </div>
+            )}
         </div>
     )
 }
@@ -100,7 +117,7 @@ export default function App() {
                 <BrowserRouter>
                     <Routes>
                         <Route path="/" element={<Layout><Home /></Layout>} />
-                        <Route path="/notes" element={<Layout><Notes /></Layout>} />
+                        <Route path="/notes" element={<Navigate to="/" replace />} />
                         <Route path="/notes/:id/preview" element={<PreviewPdf />} />
                         <Route path="/notes/:id/payment" element={
     <Layout><ProtectedRoute><Payment /></ProtectedRoute></Layout>
@@ -123,7 +140,14 @@ export default function App() {
                         <Route path="/payment-success/:id" element={
                             <Layout><ProtectedRoute><PaymentSuccess /></ProtectedRoute></Layout>
                         } />
-                        <Route path="/admin" element={<AdminLayout />}>
+                        <Route 
+                            path="/admin" 
+                            element={
+                                <ProtectedRoute>
+                                    <AdminLayout />
+                                </ProtectedRoute>
+                            }
+                        >
                             <Route index element={<AdminDashboard />} />
                             <Route path="notes" element={<AdminNotes />} />
                             <Route path="withdrawals" element={<AdminWithdrawals />} />

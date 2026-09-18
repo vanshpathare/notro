@@ -18,7 +18,10 @@ const {
   getPreviewUrl,
 } = require("../controllers/upload.controller");
 
-const verifyAuthSession = require("../middlewares/authMiddleware");
+const {
+  verifyAuthSession,
+  appSessionGuard,
+} = require("../middlewares/authMiddleware");
 
 const optionalAuth = (req, res, next) => {
   const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
@@ -44,7 +47,12 @@ router.get("/seller/my-listings", verifyAuthSession, getMyListings);
 // ── Routes with specific :id sub-paths (must come before plain /:id) ──
 router.get("/:id/preview-url", getPreviewUrl);
 router.get("/:id/download-url", verifyAuthSession, getDownloadUrl);
-router.get("/:id/analytics", verifyAuthSession, getNoteAnalytics);
+router.get(
+  "/:id/analytics",
+  verifyAuthSession,
+  appSessionGuard,
+  getNoteAnalytics,
+);
 
 // ── Share meta — public, no auth needed ──
 router.get("/:id/share-meta", async (req, res) => {

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const authMiddleware = require("../middlewares/authMiddleware"); // ← match your actual filename
+const { verifyAuthSession } = require("../middlewares/authMiddleware"); // ← match your actual filename
 const {
   getSellerProfile,
   followSeller,
@@ -43,7 +43,7 @@ router.get("/search", async (req, res) => {
 
 router.get("/:id/profile", optionalAuth, getSellerProfile);
 
-router.use(authMiddleware);
+router.use(verifyAuthSession);
 router.post("/:id/follow", followSeller);
 router.delete("/:id/follow", unfollowSeller);
 

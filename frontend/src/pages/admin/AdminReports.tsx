@@ -28,7 +28,7 @@ export default function AdminReports() {
     const handleAction = async (id: string, action: string) => {
         setActionLoading(`${id}_${action}`)
         try {
-            await adminActionReport(id, action, '')
+            await adminActionReport(id, action, `Actioned via Admin Console: ${action}`)
             setReports(prev => prev.filter(r => r.id !== id))
         } catch (e: unknown) {
             const err = e as { response?: { data?: { error?: string } } }

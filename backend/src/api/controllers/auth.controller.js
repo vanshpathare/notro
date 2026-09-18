@@ -32,11 +32,20 @@ const sendMobileOtp = async (req, res) => {
 
 const verifyMobileOtp = async (req, res) => {
   try {
-    const { phone, code } = req.body;
+    const { phone, code, forceLogin, deviceName } = req.body;
     if (!phone || !code)
       return res.status(400).json({ error: "Phone and code are required" });
 
-    const result = await authService.verifyOtp(phone, code);
+    const platform =
+      req.body.platform || req.headers["x-client-platform"] || "web";
+    const clientDevice =
+      deviceName || req.headers["x-device-name"] || "Mobile Device";
+
+    const result = await authService.verifyOtp(phone, code, {
+      platform,
+      deviceName: clientDevice,
+      forceLogin: Boolean(forceLogin),
+    });
 
     // Account needs reactivation — send to email OTP step
     if (result.requiresReactivation) {
@@ -46,6 +55,14 @@ const verifyMobileOtp = async (req, res) => {
         reactivationToken: result.reactivationToken,
         message:
           "Phone verified. Please verify your email to reactivate your account.",
+      });
+    }
+
+    if (result.activeSessionExists) {
+      return res.status(409).json({
+        error: "ACTIVE_DEVICE_LIMIT_REACHED",
+        message: `You are currently logged in on ${result.previousDevice}.`,
+        previousDevice: result.previousDevice,
       });
     }
 
@@ -134,11 +151,20 @@ const verifyEmailAndRegister = async (req, res) => {
         .json({ error: "All registration fields are required" });
     }
 
+    const platform =
+      req.body.platform || req.headers["x-client-platform"] || "web";
+    const clientDevice =
+      req.body.deviceName ||
+      req.body.registrationData?.deviceName ||
+      req.headers["x-device-name"] ||
+      "Web Browser";
+
     const result = await authService.completeEmailVerification(
       registrationToken,
       email,
       code,
       registrationData,
+      { platform, deviceName: clientDevice },
     );
 
     res.cookie("token", result.token, {
@@ -198,10 +224,16 @@ const reactivateAccount = async (req, res) => {
         .json({ error: "reactivationToken, email and code are required" });
     }
 
+    const platform =
+      req.body.platform || req.headers["x-client-platform"] || "web";
+    const clientDevice =
+      deviceName || req.headers["x-device-name"] || "Mobile Device";
+
     const result = await authService.reactivateAccount(
       reactivationToken,
       email,
       code,
+      { platform, deviceName: clientDevice },
     );
 
     res.cookie("token", result.token, {

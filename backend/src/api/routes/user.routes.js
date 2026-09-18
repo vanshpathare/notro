@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middlewares/authMiddleware"); // ← match your actual filename
+const { verifyAuthSession } = require("../middlewares/authMiddleware"); // ← match your actual filename
 const supabase = require("../../config/supabase.js");
 const R2Service = require("../../services/R2Service");
 const {
@@ -13,7 +13,7 @@ const {
   updateFcmToken,
 } = require("../controllers/user.controller");
 
-router.use(authMiddleware);
+router.use(verifyAuthSession);
 router.get("/me", getMyProfile);
 router.put("/me", updateMyProfile);
 router.delete("/me", deleteMyAccount);
@@ -22,7 +22,7 @@ router.delete("/notes/:id", deleteNote);
 router.post("/fcm-token", updateFcmToken);
 
 // DELETE /api/users/avatar
-router.delete("/avatar", authMiddleware, async (req, res) => {
+router.delete("/avatar", verifyAuthSession, async (req, res) => {
   try {
     const userId = req.user.id;
 

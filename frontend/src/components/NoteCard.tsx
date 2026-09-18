@@ -10,10 +10,11 @@ interface Props {
 
 export default function NoteCard({ note }: Props) {
     const [coverUrl, setCoverUrl] = useState<string | null>(null)
+    // 🟢 ADDED: State to manage the copy feedback tooltip
+    const [copied, setCopied] = useState(false)
     const { isDarkMode } = useTheme()
     const bgColor = getSubjectColor(note.subject)
 
-    // Log the exact key coming from the database for each card
     console.log(`Note ID ${note.id} (${note.title}) cover_image_key:`, note.cover_image_key);
 
     useEffect(() => {
@@ -36,6 +37,35 @@ export default function NoteCard({ note }: Props) {
         }
     }, [note.cover_image_key])
 
+    // 🟢 ADDED: Share handler (Prevents card click, uses Web Share or Clipboard fallback)
+    const handleShare = async (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        const shareUrl = `${window.location.origin}/notes/${note.id}`
+        const shareText = `📚 *${note.title}*\nBy ${note.seller?.name || 'Seller'}\n💰 ₹${Math.round(note.price)}\n\nCheck it out on EduCrit: ${shareUrl}`
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: note.title,
+                    text: shareText,
+                    url: shareUrl,
+                })
+            } catch {
+                // Share dismissed by user
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(shareUrl)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+            } catch {
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank')
+            }
+        }
+    }
+
     return (
         <Link to={`/notes/${note.id}`} style={{ textDecoration: 'none' }}>
             <div
@@ -56,7 +86,7 @@ export default function NoteCard({ note }: Props) {
                     (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'
                 }}
             >
-                {/* 16:9 thumbnail — matches NoteCard.kt aspectRatio(16f/9f) */}
+                {/* 16:9 thumbnail */}
                 <div style={{ aspectRatio: '16/9', position: 'relative', overflow: 'hidden' }}>
                     {note.cover_image_key && coverUrl ? (
                         <img src={coverUrl} alt={note.title}
@@ -98,19 +128,77 @@ export default function NoteCard({ note }: Props) {
                             )}
                         </div>
                     )}
-                    {/* Subject pill — matches app: light gray bg light mode, black bg dark mode */}
+
+                    {/* Subject pill */}
                     <div style={{
                         position: 'absolute', top: 8, left: 8,
                         background: isDarkMode ? 'rgba(0,0,0,0.8)' : '#F5F5F5',
                         color: isDarkMode ? 'white' : '#1A1A1A',
                         padding: '3px 10px', borderRadius: 20,
-                        fontSize: '0.75rem', fontWeight: 600
+                        fontSize: '0.75rem', fontWeight: 600,
+                        // 🟢 ADDED: Explicit z-index layer
+                        zIndex: 2
                     }}>
                         {note.subject}
                     </div>
+
+                    {/* 🟢 ADDED: Share Button (Top Right Corner) */}
+                    <button
+                        type="button"
+                        onClick={handleShare}
+                        title="Share note"
+                        aria-label="Share note"
+                        style={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            zIndex: 3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 4,
+                            background: isDarkMode ? 'rgba(20, 20, 20, 0.85)' : 'rgba(255, 255, 255, 0.92)',
+                            backdropFilter: 'blur(6px)',
+                            border: 'none',
+                            borderRadius: 20,
+                            padding: copied ? '4px 10px' : '6px',
+                            minWidth: 30,
+                            height: 30,
+                            cursor: 'pointer',
+                            color: isDarkMode ? '#f3f4f6' : '#1f2937',
+                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                            transition: 'background 0.15s ease, transform 0.15s ease',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
+                        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                    >
+                        {copied ? (
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#10B981' }}>
+                                Copied!
+                            </span>
+                        ) : (
+                            <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <circle cx="18" cy="5" r="3" />
+                                <circle cx="6" cy="12" r="3" />
+                                <circle cx="18" cy="19" r="3" />
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                            </svg>
+                        )}
+                    </button>
+                    {/* 🟢 END ADDED */}
                 </div>
 
-                {/* Content details section matching exact Android inner spacing */}
+                {/* Content details section */}
                 <div style={{ padding: '4px 12px 4px 12px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
                     <div>
                         <h3 style={{

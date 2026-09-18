@@ -35,9 +35,35 @@ export default function OtpVerification() {
         setError(null);
         try {
             const response = await api.post('/auth/verify-otp', { phone, code: otp });
-            
-            if (response.data && response.data.token && response.data.user) {
-                login(response.data.token, response.data.user);
+            const data = response.data;
+
+            // 1. New User: redirect to registration with registrationToken
+            if (data.isNewUser && data.registrationToken) {
+                sessionStorage.setItem('registrationToken', data.registrationToken);
+                sessionStorage.setItem('tempPhone', phone || '');
+                navigate('/register', {
+                    state: {
+                        registrationToken: data.registrationToken,
+                        phone: phone
+                    }
+                });
+                return;
+            }
+
+            // 2. Account Reactivation: redirect to reactivation route
+            if (data.requiresReactivation && data.reactivationToken) {
+                navigate('/reactivate', {
+                    state: {
+                        reactivationToken: data.reactivationToken,
+                        phone: phone
+                    }
+                });
+                return;
+            }
+
+            // 3. Existing User: complete authentication and route home
+            if (data.token && data.user) {
+                login(data.token, data.user);
                 navigate('/');
             } else {
                 setError('Authentication response was invalid.');

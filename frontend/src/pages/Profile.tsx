@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 
 interface UserProfile {
+    id?: string;
     name?: string;
     phone?: string;
     email?: string;
@@ -169,12 +170,16 @@ export default function Profile() {
                             </div>
 
                             <button
-                                onClick={() => navigate('/library')}
-                                className="btn-outline"
-                                style={{ width: '100%', marginTop: '8px', textAlign: 'center' }}
-                            >
-                                My Listings
-                            </button>
+    onClick={() => {
+        if (profile?.id) {
+            navigate(`/sellers/${profile.id}`);
+        }
+    }}
+    className="btn-outline"
+    style={{ width: '100%', marginTop: '8px', textAlign: 'center' }}
+>
+    My Listings
+</button>
                         </>
                     )}
                 </div>

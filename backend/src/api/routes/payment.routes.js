@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middlewares/authMiddleware");
+const { verifyAuthSession } = require("../middlewares/authMiddleware");
 const {
   createOrder,
   verifyPayment,
@@ -12,7 +12,7 @@ const {
 router.post("/webhook", webhook);
 
 // Everything below requires login
-router.use(authMiddleware);
+router.use(verifyAuthSession);
 router.post("/create-order", createOrder);
 router.post("/verify", verifyPayment);
 router.get("/my-purchases", getMyPurchases);

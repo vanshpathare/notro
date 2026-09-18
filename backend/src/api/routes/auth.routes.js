@@ -1,5 +1,4 @@
 // src/api/routes/auth.routes.js
-
 const express = require("express");
 const router = express.Router();
 const {
@@ -9,16 +8,18 @@ const {
   verifyEmailAndRegister,
   reactivateAccount,
 } = require("../controllers/auth.controller"); // 💡 Aligned names perfectly with your controller!
+const supabase = require("../../config/supabase");
 
 const authRateLimiter = require("../middlewares/rateLimiter");
-const authMiddleware = require("../middlewares/authMiddleware");
+// const authMiddleware = require("../middlewares/authMiddleware");
+const { verifyAuthSession } = require("../middlewares/authMiddleware");
 
 // POST /api/auth/logout
-router.post("/logout", authMiddleware, async (req, res) => {
+router.post("/logout", verifyAuthSession, async (req, res) => {
   try {
     await supabase
       .from("profiles")
-      .update({ fcm_token: null })
+      .update({ fcm_token: null, app_session_id: null })
       .eq("id", req.user.id);
     return res.json({ success: true });
   } catch (_) {

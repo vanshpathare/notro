@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
@@ -25,12 +26,15 @@ interface SellerProfileData {
 
 export default function SellerProfile() {
     const { id } = useParams<{ id: string }>();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [seller, setSeller] = useState<SellerProfileData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isFollowing, setIsFollowing] = useState(false);
     const [isFollowLoading, setIsFollowLoading] = useState(false);
+
+    const isOwnProfile = Boolean(user && (user.id === id || user.id === seller?.id));
 
     useEffect(() => {
         if (id) {
@@ -55,7 +59,7 @@ export default function SellerProfile() {
     };
 
     const handleFollowToggle = async () => {
-        if (!id || isFollowLoading) return;
+        if (!id || isFollowLoading || isOwnProfile) return;
         setIsFollowLoading(true);
         try {
             if (isFollowing) {
@@ -92,23 +96,25 @@ export default function SellerProfile() {
                     ← Back
                 </button>
 
-                <button
-                    onClick={handleFollowToggle}
-                    disabled={isFollowLoading}
-                    style={{
-                        background: isFollowing ? 'var(--surface-secondary, #F0F2F5)' : 'var(--primary)',
-                        color: isFollowing ? 'var(--text-primary)' : 'white',
-                        border: 'none',
-                        padding: '8px 20px',
-                        borderRadius: 20,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        fontSize: '0.9rem',
-                        boxShadow: 'var(--shadow-sm)'
-                    }}
-                >
-                    {isFollowing ? 'Subscribed ✓' : 'Subscribe'}
-                </button>
+                {!isOwnProfile && (
+                    <button
+                        onClick={handleFollowToggle}
+                        disabled={isFollowLoading}
+                        style={{
+                            background: isFollowing ? 'var(--surface-secondary, #F0F2F5)' : 'var(--primary)',
+                            color: isFollowing ? 'var(--text-primary)' : 'white',
+                            border: 'none',
+                            padding: '8px 20px',
+                            borderRadius: 20,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}
+                    >
+                        {isFollowing ? 'Subscribed ✓' : 'Subscribe'}
+                    </button>
+                )}
             </div>
 
             {/* Seller Header Info Card */}

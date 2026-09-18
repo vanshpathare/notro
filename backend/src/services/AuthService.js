@@ -67,7 +67,12 @@ const sendOtp = async (phone) => {
 // ─────────────────────────────────────
 // STAGE 1B — Verify phone OTP
 // ─────────────────────────────────────
-const verifyOtp = async (phone, code) => {
+const verifyOtp = async (phone, code, clientInfo = {}) => {
+  const platform =
+    typeof clientInfo === "string" ? clientInfo : clientInfo.platform || "web";
+  const deviceName = clientInfo.deviceName || "Android Phone";
+  const forceLogin = Boolean(clientInfo.forceLogin);
+
   const { data: otpRecord, error } = await supabase
     .from("otps")
     .select("*")
@@ -90,9 +95,6 @@ const verifyOtp = async (phone, code) => {
       .eq("id", otpRecord.id);
     throw new Error("OTP_INVALID");
   }
-
-  // Mark OTP as used
-  await supabase.from("otps").update({ is_used: true }).eq("id", otpRecord.id);
 
   // Check if fully registered profile exists
   const { data: existingProfile } = await supabase
@@ -128,18 +130,49 @@ const verifyOtp = async (phone, code) => {
       throw new Error("ACCOUNT_PERMANENTLY_SUSPENDED");
     }
 
+    const isApp =
+      platform === "app" || platform === "android" || platform === "ios";
+
+    if (isApp && existingProfile.app_session_id && !forceLogin) {
+      return {
+        isNewUser: false,
+        activeSessionExists: true,
+        previousDevice: existingProfile.app_device_name || "Another Device",
+      };
+    }
+
+    await supabase
+      .from("otps")
+      .update({ is_used: true })
+      .eq("id", otpRecord.id);
+
+    let appSessionId = null;
+
+    if (isApp) {
+      appSessionId = crypto.randomUUID();
+      await supabase
+        .from("profiles")
+        .update({ app_session_id: appSessionId, app_device_name: deviceName })
+        .eq("id", existingProfile.id);
+    }
+
     // Normal existing user login
     const token = jwt.sign(
       {
         id: existingProfile.id,
         phone: existingProfile.phone,
         account_type: existingProfile.account_type,
+        platform: isApp ? "app" : "web",
+        appSessionId,
       },
       process.env.JWT_SECRET,
       { expiresIn: "30d" },
     );
     return { isNewUser: false, token, user: existingProfile };
   }
+
+  // 🟢 Mark OTP as used for new users
+  await supabase.from("otps").update({ is_used: true }).eq("id", otpRecord.id);
 
   // New user — clean up any ghost auth users for this phone before proceeding
   // This handles the case where someone abandoned registration halfway
@@ -243,7 +276,14 @@ const completeEmailVerification = async (
   email,
   code,
   registrationData,
+  clientInfo = {},
 ) => {
+  const platform =
+    typeof clientInfo === "string" ? clientInfo : clientInfo.platform || "web";
+  const deviceName = clientInfo.deviceName || "Android Phone";
+  const isApp =
+    platform === "app" || platform === "android" || platform === "ios";
+
   const { account_type } = registrationData;
 
   // ── Validate account type ──
@@ -364,6 +404,11 @@ const completeEmailVerification = async (
 
   if (existingProfile) {
     // Profile exists — update it with the new details and verified status
+    let appSessionId = null;
+    if (isApp) {
+      appSessionId = crypto.randomUUID();
+    }
+
     const { data: updatedProfile, error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -376,6 +421,9 @@ const completeEmailVerification = async (
         is_seller: account_type !== "student",
         verification_status:
           account_type === "student" ? "approved" : "pending",
+        ...(isApp
+          ? { app_session_id: appSessionId, app_device_name: deviceName }
+          : {}),
       })
       .eq("id", existingProfile.id)
       .select()
@@ -388,6 +436,9 @@ const completeEmailVerification = async (
         id: updatedProfile.id,
         phone: updatedProfile.phone,
         account_type: updatedProfile.account_type,
+        ...(isApp
+          ? { app_session_id: appSessionId, app_device_name: deviceName }
+          : {}),
       },
       process.env.JWT_SECRET,
       { expiresIn: "30d" },
@@ -431,6 +482,8 @@ const completeEmailVerification = async (
     .eq("id", authData.user.id)
     .single();
 
+  let targetUser = newProfile;
+
   if (fetchError || !newProfile) {
     // Trigger may have failed — create profile manually as fallback
     const { data: manualProfile, error: manualError } = await supabase
@@ -453,17 +506,23 @@ const completeEmailVerification = async (
       .single();
 
     if (manualError) throw manualError;
+    targetUser = manualProfile;
+  }
 
-    const token = jwt.sign(
-      {
-        id: manualProfile.id,
-        phone: manualProfile.phone,
-        account_type: manualProfile.account_type,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "30d" },
-    );
-    return { token, user: manualProfile };
+  let appSessionId = null;
+  if (isApp) {
+    appSessionId = crypto.randomUUID();
+    const { data: refreshedProfile } = await supabase
+      .from("profiles")
+      .update({
+        app_session_id: appSessionId,
+        app_device_name: deviceName,
+      })
+      .eq("id", targetUser.id)
+      .select()
+      .single();
+
+    if (refreshedProfile) targetUser = refreshedProfile;
   }
 
   // ── Issue session JWT ──
@@ -472,15 +531,28 @@ const completeEmailVerification = async (
       id: newProfile.id,
       phone: newProfile.phone,
       account_type: newProfile.account_type,
+      platform: isApp ? "app" : "web",
+      appSessionId,
     },
     process.env.JWT_SECRET,
     { expiresIn: "30d" },
   );
 
-  return { token, user: newProfile };
+  return { token, user: targetUser };
 };
 
-const reactivateAccount = async (reactivationToken, email, code) => {
+const reactivateAccount = async (
+  reactivationToken,
+  email,
+  code,
+  clientInfo = {},
+) => {
+  const platform =
+    typeof clientInfo === "string" ? clientInfo : clientInfo.platform || "web";
+  const deviceName = clientInfo.deviceName || "Android Phone";
+  const isApp =
+    platform === "app" || platform === "android" || platform === "ios";
+
   // Verify reactivation token
   let decoded;
   try {
@@ -533,10 +605,22 @@ const reactivateAccount = async (reactivationToken, email, code) => {
     throw new Error("PENDING_SETTLEMENT_REQUIRED");
   }
 
+  let appSessionId = null;
+  if (isApp) {
+    appSessionId = crypto.randomUUID();
+  }
+
   // Restore account
   await supabase
     .from("profiles")
-    .update({ is_deleted: false, is_banned: false, deletion_type: null })
+    .update({
+      is_deleted: false,
+      is_banned: false,
+      deletion_type: null,
+      ...(isApp
+        ? { app_session_id: appSessionId, app_device_name: deviceName }
+        : {}),
+    })
     .eq("id", userId);
 
   // Restore their notes
@@ -557,6 +641,8 @@ const reactivateAccount = async (reactivationToken, email, code) => {
       id: profile.id,
       phone: profile.phone,
       account_type: profile.account_type,
+      platform: isApp ? "app" : "web",
+      appSessionId,
     },
     process.env.JWT_SECRET,
     { expiresIn: "30d" },

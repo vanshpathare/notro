@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middlewares/authMiddleware");
+const { verifyAuthSession } = require("../middlewares/authMiddleware");
 const {
   submitRating,
   getRatingsForNote,
@@ -10,7 +10,7 @@ const {
 router.get("/:noteId", getRatingsForNote);
 
 // Protected — must be logged in to submit
-router.use(authMiddleware);
+router.use(verifyAuthSession);
 router.post("/", submitRating);
 
 module.exports = router;

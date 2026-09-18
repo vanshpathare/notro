@@ -142,7 +142,8 @@ export interface NoteFilters {
 // ── Main API client ──
 const api = axios.create({
     baseURL: BASE_URL,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
+    withCredentials: true
 })
 
 api.interceptors.request.use(config => {
@@ -157,9 +158,21 @@ api.interceptors.response.use(
     response => response,
     error => {
         if (error.response?.status === 401) {
+            // 1. Always purge stale credentials
             localStorage.removeItem('educrit_token')
             localStorage.removeItem('educrit_user')
-            window.location.href = '/login'
+
+            // 2. Define public paths that anyone is allowed to view
+            const publicPaths = ['/', '/login', '/register', '/privacy', '/terms']
+            const currentPath = window.location.pathname
+            const isPublicPage = publicPaths.includes(currentPath) || 
+                                currentPath.startsWith('/notes/') || 
+                                currentPath.startsWith('/sellers/')
+
+            // 3. Only redirect to /login if the user is attempting to access a protected page
+            if (!isPublicPage) {
+                window.location.href = '/register'
+            }
         }
         return Promise.reject(error)
     }
@@ -167,8 +180,9 @@ api.interceptors.response.use(
 
 // ── Admin API client ──
 const adminApi = axios.create({
-    baseURL: import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000',
-    headers: { 'Content-Type': 'application/json' }
+    baseURL: BASE_URL,
+    headers: { 'Content-Type': 'application/json' },
+    withCredentials: true
 })
 
 adminApi.interceptors.request.use(config => {
@@ -293,10 +307,10 @@ export const adminSearchUsers = (q: string) =>
     adminApi.get<{ success: boolean; users: UserProfile[] }>('/admin/users/search', { params: { q } })
 
 export const adminBanUser = (userId: string) =>
-    adminApi.patch(`/admin/users/${userId}/ban`)
+    adminApi.patch(`/admin/users/${userId}/ban`, { is_banned: true })
 
 export const adminUnbanUser = (userId: string) =>
-    adminApi.patch(`/admin/users/${userId}/unban`)
+    adminApi.patch(`/admin/users/${userId}/unban`, { is_banned: false })
 
 export const adminGetOrphans = () =>
     adminApi.get<{ success: boolean; count: number; orphans: OrphanFile[] }>('/admin/orphans/list')

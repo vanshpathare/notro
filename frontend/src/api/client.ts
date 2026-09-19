@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from 'axios'
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 // ── Types ──
 export interface Note {
@@ -141,7 +141,7 @@ export interface NoteFilters {
 
 // ── Main API client ──
 const api = axios.create({
-    baseURL: BASE_URL,
+    baseURL: API_BASE_URL,
     headers: { 'Content-Type': 'application/json' },
     withCredentials: true
 })
@@ -180,12 +180,18 @@ api.interceptors.response.use(
 
 // ── Admin API client ──
 const adminApi = axios.create({
-    baseURL: BASE_URL,
+    baseURL: API_BASE_URL,
     headers: { 'Content-Type': 'application/json' },
     withCredentials: true
 })
 
 adminApi.interceptors.request.use(config => {
+
+    const token = localStorage.getItem('educrit_token')
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+    
     const adminToken = sessionStorage.getItem('admin_token')
     if (adminToken) {
         config.headers['x-admin-token'] = adminToken

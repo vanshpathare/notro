@@ -158,3 +158,5 @@
 {"level":"error","message":"getSellerProfile | 0d7ac2cc-ff7c-4cd6-a1dc-55d1daac4950 | SELLER_NOT_FOUND"}
 {"level":"error","message":"getSellerProfile | bd87b5d5-3446-4eef-a423-8c43eae61e1d | SELLER_NOT_FOUND"}
 {"level":"error","message":"sendMobileOtp | 8788871222 | RATE_LIMIT_EXCEEDED"}
+{"level":"error","message":"getNoteById | 9a33066a-e6b7-4a2c-98c8-d5a8e441b97f | NOTE_NOT_FOUND"}
+{"level":"error","message":"getMyProfile | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TypeError: fetch failed"}

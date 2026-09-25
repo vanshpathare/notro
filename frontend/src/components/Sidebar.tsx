@@ -83,7 +83,7 @@ export default function Sidebar() {
                     </NavLink>
                 ))}
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-hint)', padding: '8px 16px 0 16px' }}>
-                    © 2026 EduCrit
+                    © 2026 Notezho
                 </div>
             </div>
         </aside>

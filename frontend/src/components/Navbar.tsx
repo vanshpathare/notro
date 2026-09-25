@@ -64,7 +64,7 @@ export default function Navbar() {
                     alignItems: 'center',
                     gap: 8
                 }}>
-                    📚 EduCrit
+                    📚 Notezho
                 </Link>
 
                 {/* Desktop Navigation */}

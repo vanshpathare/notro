@@ -1,12 +1,12 @@
 export default function Terms() {
   const sections = [
     {
-      title: "1. About EduCrit",
-      content: `EduCrit is a marketplace connecting students who sell study notes with students who buy them. We are not responsible for the content of notes uploaded by sellers.`,
+      title: "1. About Notezho",
+      content: `Notezho is a marketplace connecting students who sell study notes with students who buy them. We are not responsible for the content of notes uploaded by sellers.`,
     },
     {
       title: "2. Eligibility",
-      content: `You must be at least 13 years old to use EduCrit. By creating an account you confirm you meet this requirement.`,
+      content: `You must be at least 13 years old to use Notezho. By creating an account you confirm you meet this requirement.`,
     },
     {
       title: "3. Seller Responsibilities",
@@ -27,7 +27,7 @@ We reserve the right to remove content that violates these terms and suspend rep
     },
     {
       title: "5. Payments and Commissions",
-      content: `EduCrit charges a platform commission on each sale:
+      content: `Notezho charges a platform commission on each sale:
 - Student sellers: 20% commission
 - Business and YouTube accounts: 12% commission
 
@@ -47,11 +47,11 @@ Payments are processed by Razorpay. Payouts are processed manually within 2-3 bu
     },
     {
       title: "8. Intellectual Property",
-      content: `Sellers retain ownership of their uploaded notes. By uploading to EduCrit you grant us a license to host and display your content on the platform.`,
+      content: `Sellers retain ownership of their uploaded notes. By uploading to Notezho you grant us a license to host and display your content on the platform.`,
     },
     {
       title: "9. Limitation of Liability",
-      content: `EduCrit is provided "as is". We are not liable for any damages arising from your use of the platform, including lost profits or data loss.`,
+      content: `Notezho is provided "as is". We are not liable for any damages arising from your use of the platform, including lost profits or data loss.`,
     },
     {
       title: "10. Governing Law",
@@ -59,7 +59,7 @@ Payments are processed by Razorpay. Payouts are processed manually within 2-3 bu
     },
     {
       title: "11. Contact",
-      content: `For questions: support@educrit.in`,
+      content: `For questions: notezho.app@gmail.com`,
     },
   ];
 

@@ -2,7 +2,7 @@
 //     const sections = [
 //         {
 //             title: 'Information We Collect',
-//             content: `We collect the following when you use EduCrit:
+//             content: `We collect the following when you use Notezho:
 
 // Phone Number — used for OTP verification via WhatsApp Business API.
 // Email Address — used for account creation and communication.
@@ -38,7 +38,7 @@
 //         },
 //         {
 //             title: 'Your Rights',
-//             content: `You have the right to access, correct, or delete your personal data. Contact us at support@educrit.in to exercise these rights.`
+//             content: `You have the right to access, correct, or delete your personal data. Contact us at support@Notezho.in to exercise these rights.`
 //         },
 //         {
 //             title: "Children's Privacy",
@@ -46,7 +46,7 @@
 //         },
 //         {
 //             title: 'Contact Us',
-//             content: `For questions about this Privacy Policy: support@educrit.in`
+//             content: `For questions about this Privacy Policy: support@Notezho.in`
 //         }
 //     ]
 
@@ -88,7 +88,7 @@ export default function Privacy() {
             <div style={{ color: '#333', lineHeight: 1.7, fontSize: '1rem' }}>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111', marginTop: 24, marginBottom: 12 }}>1. Information We Collect</h2>
                 <p style={{ marginBottom: 16 }}>
-                    When you register, browse notes, or make purchases on EduCrit, we collect personal information such as your name, mobile number, email address, college details, and payment transaction metadata necessary to fulfill your orders and deliver digital goods.
+                    When you register, browse notes, or make purchases on Notezho, we collect personal information such as your name, mobile number, email address, college details, and payment transaction metadata necessary to fulfill your orders and deliver digital goods.
                 </p>
 
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111', marginTop: 24, marginBottom: 12 }}>2. How We Use Your Information</h2>

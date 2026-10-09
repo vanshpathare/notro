@@ -28,6 +28,7 @@ import AdminWithdrawals from './pages/admin/AdminWithdrawals'
 import AdminReports from './pages/admin/AdminReports'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminOrphans from './pages/admin/AdminOrphans'
+import AdminPromos from './pages/admin/AdminPromos'
 
 
 import './styles/global.css'
@@ -154,6 +155,7 @@ export default function App() {
                             <Route path="reports" element={<AdminReports />} />
                             <Route path="users" element={<AdminUsers />} />
                             <Route path="orphans" element={<AdminOrphans />} />
+                            <Route path="promos" element={<AdminPromos />} />
                         </Route>
                         <Route path="*" element={<Layout><NotFound /></Layout>} />
                     </Routes>

@@ -8,7 +8,7 @@ export default function OtpVerification() {
     const [otp, setOtp] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [resendTimer, setResendTimer] = useState(15);
+    const [resendTimer, setResendTimer] = useState(30);
     const [isResending, setIsResending] = useState(false);
     const [resendSuccess, setResendSuccess] = useState(false);
     const { login } = useAuth();
@@ -81,7 +81,7 @@ export default function OtpVerification() {
         setResendSuccess(false);
         try {
             await api.post('/auth/send-otp', { phone });
-            setResendTimer(15);
+            setResendTimer(30);
             setResendSuccess(true);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to resend OTP. Please try again.');
@@ -165,7 +165,7 @@ export default function OtpVerification() {
                             borderRadius: 12,
                             fontWeight: 600,
                             fontSize: '1rem',
-                            cursor: 'pointer',
+                            cursor: isLoading || otp.length !== 6 ? 'not-allowed' : 'pointer',
                             opacity: isLoading || otp.length !== 6 ? 0.7 : 1,
                             boxSizing: 'border-box',
                             marginBottom: 20

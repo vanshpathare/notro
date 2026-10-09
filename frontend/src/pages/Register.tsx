@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { sendEmailOtp, verifyEmailRegister } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 
 type AccountType = 'student' | 'business' | 'youtube';
 
@@ -35,11 +36,13 @@ const ACCOUNT_OPTIONS: AccountOption[] = [
 
 export default function Register() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
 
     // Steps: 1. Account Type -> 2. Phone OTP -> 3. Profile Details -> 4. Email OTP
     const [step, setStep] = useState<'type' | 'phone' | 'details' | 'email_otp'>('type');
     const [selectedType, setSelectedType] = useState<AccountType>('student');
+    const [isPhoneOtpSent, setIsPhoneOtpSent] = useState(false);
 
     // Phone state
     const [phone, setPhone] = useState('');
@@ -56,6 +59,8 @@ export default function Register() {
     const [emailOtp, setEmailOtp] = useState('');
     const [emailTimer, setEmailTimer] = useState(0);
 
+    const [termsAccepted, setTermsAccepted] = useState(false);
+
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +70,18 @@ export default function Register() {
         const interval = setInterval(() => setPhoneResendTimer(p => p - 1), 1000);
         return () => clearInterval(interval);
     }, [phoneResendTimer]);
+
+    useEffect(() => {
+  const token = location.state?.registrationToken || sessionStorage.getItem('registrationToken');
+  const incomingPhone = location.state?.phone || sessionStorage.getItem('tempPhone');
+
+  if (token && incomingPhone) {
+    setRegistrationToken(token);
+    setPhone(incomingPhone);
+    // Skip phone OTP and move directly to details or type selection
+    setStep('details');
+  }
+}, [location.state]);
 
     useEffect(() => {
         if (emailTimer <= 0) return;
@@ -87,6 +104,7 @@ export default function Register() {
         setError(null);
         try {
             await api.post('/auth/send-otp', { phone });
+            setIsPhoneOtpSent(true);
             setPhoneResendTimer(30);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to send OTP. Please try again.');
@@ -139,6 +157,10 @@ export default function Register() {
             );
         }
 
+        if (!termsAccepted) {
+        return setError('Please agree to the Privacy and Terms to continue');
+    }
+
         setIsLoading(true);
         setError(null);
         try {
@@ -157,6 +179,10 @@ export default function Register() {
         e.preventDefault();
         if (emailOtp.length < 4) return setError('Enter the complete verification code');
 
+        if (!termsAccepted) {
+        return setError('You must accept the Privacy and Terms to create an account');
+    }
+
         setIsLoading(true);
         setError(null);
         try {
@@ -167,7 +193,8 @@ export default function Register() {
                 registrationData: {
                     name: name.trim(),
                     college: orgName.trim(),
-                    account_type: selectedType
+                    account_type: selectedType,
+                    terms_accepted: true
                 }
             });
 
@@ -371,7 +398,7 @@ export default function Register() {
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary, #111)' }}>Enter Mobile Number</h2>
                         <p style={{ color: 'var(--text-secondary, #666)', fontSize: '0.85rem', marginBottom: 16 }}>We'll send a WhatsApp verification code</p>
 
-                        {!phoneResendTimer && !registrationToken ? (
+                        {!isPhoneOtpSent ? (
                             <form onSubmit={handleSendPhoneOtp} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                                 <div style={{ display: 'flex', gap: 8 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', background: '#f5f5f5', border: '1px solid #ddd', borderRadius: 12, padding: '0 14px', fontWeight: 600 }}>+91</div>
@@ -385,9 +412,32 @@ export default function Register() {
                                         required
                                     />
                                 </div>
-                                <button type="submit" disabled={isLoading || phone.length !== 10} style={buttonPrimaryStyle}>
-                                    {isLoading ? 'Sending...' : 'Send OTP'}
-                                </button>
+
+                                {phone.length < 10 && (
+                    <span style={{ 
+                        fontSize: '0.78rem', 
+                        color: '#666', 
+                        marginTop: -6, 
+                        marginLeft: 4 
+                    }}>
+                        Enter a valid 10-digit number
+                    </span>
+                )}
+
+
+                                {/* 🟡 1. Check valid 10-digit Indian phone (starts with 6, 7, 8, or 9) */}
+<button 
+    type="submit" 
+    disabled={isLoading || !/^[6-9]\d{9}$/.test(phone)} 
+    style={{
+        ...buttonPrimaryStyle,
+        // 🟡 2. Dynamic disabled cursor and opacity
+        cursor: isLoading || !/^[6-9]\d{9}$/.test(phone) ? 'not-allowed' : 'pointer',
+        opacity: isLoading || !/^[6-9]\d{9}$/.test(phone) ? 0.5 : 1
+    }}
+>
+    {isLoading ? 'Sending...' : 'Send OTP'}
+</button>
                             </form>
                         ) : (
                             <form onSubmit={handleVerifyPhoneOtp} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -400,9 +450,25 @@ export default function Register() {
                                     style={{ ...inputStyle, textAlign: 'center', fontSize: '1.2rem', letterSpacing: '2px' }}
                                     required
                                 />
-                                <button type="submit" disabled={isLoading || phoneOtp.length !== 6} style={buttonPrimaryStyle}>
-                                    {isLoading ? 'Verifying...' : 'Verify Phone'}
-                                </button>
+
+                                {phoneOtp.length < 6 && (
+        <span style={{ fontSize: '0.78rem', color: '#666', marginTop: -6, textAlign: 'center' }}>
+            Enter the complete 6-digit code
+        </span>
+    )}
+
+                                <button 
+        type="submit" 
+        disabled={isLoading || phoneOtp.length !== 6} 
+        style={{
+            ...buttonPrimaryStyle,
+            cursor: isLoading || phoneOtp.length !== 6 ? 'not-allowed' : 'pointer',
+            opacity: isLoading || phoneOtp.length !== 6 ? 0.5 : 1
+        }}
+    >
+        {isLoading ? 'Verifying...' : 'Verify'}
+    </button>
+
                                 <button
                                     type="button"
                                     disabled={phoneResendTimer > 0 || isLoading}
@@ -439,9 +505,41 @@ export default function Register() {
                                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Email Address</label>
                                 <input type="email" placeholder="name@domain.com" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} required />
                             </div>
-                            <button type="submit" disabled={isLoading} style={buttonPrimaryStyle}>
-                                {isLoading ? 'Sending code...' : 'Continue to Verification'}
-                            </button>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, textAlign: 'left' }}>
+                <input
+                    type="checkbox"
+                    id="terms-check"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#1A73E8' }}
+                />
+                <label htmlFor="terms-check" style={{ fontSize: '0.82rem', color: '#555', cursor: 'pointer', userSelect: 'none' }}>
+                    I agree to the{' '}
+                    <span
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open('/terms', '_blank', 'noopener,noreferrer');
+                        }}
+                        style={{ color: '#1A73E8', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                    >
+                        Privacy and Terms
+                    </span>
+                </label>
+            </div>
+
+            <button 
+                type="submit" 
+                disabled={isLoading || !termsAccepted} 
+                style={{
+                    ...buttonPrimaryStyle,
+                    cursor: isLoading || !termsAccepted ? 'not-allowed' : 'pointer',
+                    opacity: isLoading || !termsAccepted ? 0.6 : 1
+                }}
+            >
+                {isLoading ? 'Sending code...' : 'Continue to Verification'}
+            </button>
                         </form>
                     </div>
                 )}
@@ -464,9 +562,22 @@ export default function Register() {
                                 style={{ ...inputStyle, textAlign: 'center', fontSize: '1.2rem', letterSpacing: '2px' }}
                                 required
                             />
-                            <button type="submit" disabled={isLoading || emailOtp.length < 4} style={buttonPrimaryStyle}>
-                                {isLoading ? 'Creating Account...' : 'Complete Registration'}
-                            </button>
+
+                            
+                                                        <button
+                type="submit"
+                disabled={isLoading || emailOtp.length !== 6}
+                style={{
+                    ...buttonPrimaryStyle,
+                    cursor: isLoading || emailOtp.length !== 6 ? 'not-allowed' : 'pointer',
+                    opacity: isLoading || emailOtp.length !== 6 ? 0.5 : 1
+                }}
+            >
+                {isLoading ? 'Creating Account...' : 'Complete Registration'}
+            </button>
+
+                             
+
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                                 <button type="button" onClick={() => setStep('details')} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '0.82rem' }}>← Edit Details</button>
                                 <button

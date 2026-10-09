@@ -6,10 +6,104 @@ const { notifySellerOfSale } = require("../utils/notifications.js");
 const getCommissionRate = (accountType) =>
   accountType === "student" ? 20.0 : 12.0;
 
+// // ──────────────────────────────────────────────────────────────────────
+// // STEP 1 — Create a Razorpay order
+// // ──────────────────────────────────────────────────────────────────────
+// const createOrder = async (buyerId, noteId, promoCode=null) => {
+//   const { data: note, error: noteError } = await supabase
+//     .from("notes")
+//     .select("id, price, seller_id, status, title")
+//     .eq("id", noteId)
+//     .eq("status", "approved")
+//     .single();
+
+//   if (noteError || !note) throw new Error("NOTE_NOT_FOUND");
+//   if (note.seller_id === buyerId) throw new Error("CANNOT_BUY_OWN_NOTE");
+
+//   const { data: existing } = await supabase
+//     .from("purchases")
+//     .select("id, status")
+//     .eq("buyer_id", buyerId)
+//     .eq("note_id", noteId)
+//     .maybeSingle();
+
+//   if (existing?.status === "paid") throw new Error("ALREADY_PURCHASED");
+
+//   const { data: seller, error: sellerError } = await supabase
+//     .from("profiles")
+//     .select("account_type, is_banned")
+//     .eq("id", note.seller_id)
+//     .single();
+
+//   if (sellerError || !seller) throw new Error("SELLER_NOT_FOUND");
+//   if (seller.is_banned) throw new Error("SELLER_BANNED");
+
+//   const originalPrice = parseFloat(note.price);
+//   const commissionRate = getCommissionRate(seller.account_type);
+
+//   const amount = parseFloat(note.price);
+//   const platformFee = Math.round(amount * commissionRate) / 100;
+//   const sellerEarning = Math.round((amount - platformFee) * 100) / 100;
+
+//   // Razorpay expects price values entirely in smallest currency unit (Paise)
+//   const order = await razorpay.orders.create({
+//     amount: Math.round(amount * 100),
+//     currency: "INR",
+//     receipt: `note_${noteId.slice(0, 8)}_${Date.now()}`,
+//     notes: { buyer_id: buyerId, note_id: noteId },
+//   });
+
+//   let purchaseRow;
+//   if (existing) {
+//     const { data, error } = await supabase
+//       .from("purchases")
+//       .update({
+//         seller_id: note.seller_id,
+//         amount_paid: amount,
+//         platform_fee: platformFee,
+//         seller_earning: sellerEarning,
+//         razorpay_order_id: order.id,
+//         razorpay_payment_id: null,
+//         status: "created",
+//         paid_at: null,
+//       })
+//       .eq("id", existing.id)
+//       .select()
+//       .single();
+//     if (error) throw error;
+//     purchaseRow = data;
+//   } else {
+//     const { data, error } = await supabase
+//       .from("purchases")
+//       .insert({
+//         buyer_id: buyerId,
+//         note_id: noteId,
+//         seller_id: note.seller_id,
+//         amount_paid: amount,
+//         platform_fee: platformFee,
+//         seller_earning: sellerEarning,
+//         razorpay_order_id: order.id,
+//         status: "created",
+//       })
+//       .select()
+//       .single();
+//     if (error) throw error;
+//     purchaseRow = data;
+//   }
+
+//   return {
+//     orderId: order.id,
+//     amount: order.amount,
+//     currency: order.currency,
+//     keyId: process.env.RAZORPAY_KEY_ID,
+//     noteTitle: note.title,
+//     purchaseId: purchaseRow.id,
+//   };
+// };
 // ──────────────────────────────────────────────────────────────────────
-// STEP 1 — Create a Razorpay order
+// STEP 1 — Create a Razorpay order (with single-code, non-stackable promo)
 // ──────────────────────────────────────────────────────────────────────
-const createOrder = async (buyerId, noteId) => {
+const createOrder = async (buyerId, noteId, promoCode = null) => {
   const { data: note, error: noteError } = await supabase
     .from("notes")
     .select("id, price, seller_id, status, title")
@@ -38,33 +132,86 @@ const createOrder = async (buyerId, noteId) => {
   if (sellerError || !seller) throw new Error("SELLER_NOT_FOUND");
   if (seller.is_banned) throw new Error("SELLER_BANNED");
 
-  const commissionRate = getCommissionRate(seller.account_type);
-  const amount = parseFloat(note.price);
-  const platformFee = Math.round(amount * commissionRate) / 100;
-  const sellerEarning = Math.round((amount - platformFee) * 100) / 100;
+  // 1. Authoritative base calculations
+  const originalPrice = parseFloat(note.price);
+  const commissionRate = getCommissionRate(seller.account_type); // 20% or 12%
 
-  // Razorpay expects price values entirely in smallest currency unit (Paise)
+  // SELLER PAYOUT IS GUARANTEED FROM LISTING PRICE (Cannot be reduced by promo)
+  const basePlatformFee = Math.round(originalPrice * commissionRate) / 100;
+  const sellerEarning =
+    Math.round((originalPrice - basePlatformFee) * 100) / 100;
+
+  // 2. Validate and apply single promo code (No stacking)
+  let discountPercentage = 0;
+  let promoCodeRecord = null;
+
+  if (promoCode && typeof promoCode === "string" && promoCode.trim() !== "") {
+    const cleanCode = promoCode.trim().toUpperCase();
+    const { data: promo } = await supabase
+      .from("promo_codes")
+      .select("*")
+      .eq("code", cleanCode)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (promo) {
+      const now = new Date();
+      const isValidDate =
+        now >= new Date(promo.valid_from) && now <= new Date(promo.valid_until);
+
+      if (isValidDate) {
+        // Enforce hard backend cap at 10% regardless of database payload
+        discountPercentage = Math.min(
+          parseFloat(promo.discount_percentage),
+          10.0,
+        );
+        promoCodeRecord = promo;
+      }
+    }
+  }
+
+  // 3. Calculate final amounts
+  // Discount is calculated ONCE from originalPrice
+  const discountAmount =
+    Math.round(((originalPrice * discountPercentage) / 100) * 100) / 100;
+  const finalPayable = Math.round((originalPrice - discountAmount) * 100) / 100;
+
+  // Platform absorbs the discount entirely
+  const netPlatformFee = Math.round((finalPayable - sellerEarning) * 100) / 100;
+
+  // 4. Create Razorpay order with the discounted amount in Paise
   const order = await razorpay.orders.create({
-    amount: Math.round(amount * 100),
+    amount: Math.round(finalPayable * 100),
     currency: "INR",
     receipt: `note_${noteId.slice(0, 8)}_${Date.now()}`,
-    notes: { buyer_id: buyerId, note_id: noteId },
+    notes: {
+      buyer_id: buyerId,
+      note_id: noteId,
+      promo_code_id: promoCodeRecord?.id || "none",
+    },
   });
+
+  // 5. Upsert purchase record
+  const purchasePayload = {
+    buyer_id: buyerId,
+    note_id: noteId,
+    seller_id: note.seller_id,
+    amount_paid: finalPayable,
+    platform_fee: netPlatformFee,
+    seller_earning: sellerEarning, // Untouched
+    discount_amount: discountAmount,
+    promo_code_id: promoCodeRecord ? promoCodeRecord.id : null,
+    razorpay_order_id: order.id,
+    razorpay_payment_id: null,
+    status: "created",
+    paid_at: null,
+  };
 
   let purchaseRow;
   if (existing) {
     const { data, error } = await supabase
       .from("purchases")
-      .update({
-        seller_id: note.seller_id,
-        amount_paid: amount,
-        platform_fee: platformFee,
-        seller_earning: sellerEarning,
-        razorpay_order_id: order.id,
-        razorpay_payment_id: null,
-        status: "created",
-        paid_at: null,
-      })
+      .update(purchasePayload)
       .eq("id", existing.id)
       .select()
       .single();
@@ -73,16 +220,7 @@ const createOrder = async (buyerId, noteId) => {
   } else {
     const { data, error } = await supabase
       .from("purchases")
-      .insert({
-        buyer_id: buyerId,
-        note_id: noteId,
-        seller_id: note.seller_id,
-        amount_paid: amount,
-        platform_fee: platformFee,
-        seller_earning: sellerEarning,
-        razorpay_order_id: order.id,
-        status: "created",
-      })
+      .insert(purchasePayload)
       .select()
       .single();
     if (error) throw error;
@@ -96,6 +234,9 @@ const createOrder = async (buyerId, noteId) => {
     keyId: process.env.RAZORPAY_KEY_ID,
     noteTitle: note.title,
     purchaseId: purchaseRow.id,
+    originalPrice,
+    discountAmount,
+    finalPayable,
   };
 };
 

@@ -648,4 +648,137 @@ router.delete("/orphans/cleanup", async (req, res) => {
   }
 });
 
+// ══════════════════════════════════════
+// PROMO CODES MANAGEMENT
+// ══════════════════════════════════════
+
+// GET /api/admin/promos — List all promo codes with redemption stats
+router.get("/promos", async (req, res) => {
+  try {
+    const { data: promos, error } = await supabase
+      .from("promo_codes")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    // Fetch redemption counts for each promo code from purchases table
+    const { data: usageData, error: usageErr } = await supabase
+      .from("purchases")
+      .select("promo_code_id, discount_amount")
+      .not("promo_code_id", "is", null)
+      .eq("status", "paid");
+
+    if (usageErr) throw usageErr;
+
+    // Aggregate uses and total company subsidy per promo code
+    const statsMap = (usageData || []).reduce((acc, curr) => {
+      const pid = curr.promo_code_id;
+      if (!acc[pid]) {
+        acc[pid] = { count: 0, total_discounted: 0 };
+      }
+      acc[pid].count += 1;
+      acc[pid].total_discounted += parseFloat(curr.discount_amount || 0);
+      return acc;
+    }, {});
+
+    const enrichedPromos = (promos || []).map((p) => ({
+      ...p,
+      used_count: statsMap[p.id]?.count || 0,
+      total_subsidy:
+        Math.round((statsMap[p.id]?.total_discounted || 0) * 100) / 100,
+    }));
+
+    return res.json({ success: true, promos: enrichedPromos });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/promos — Create a new promo code
+router.post("/promos", async (req, res) => {
+  try {
+    const { code, discount_percentage, valid_until, valid_from } = req.body;
+
+    if (!code || !discount_percentage || !valid_until) {
+      return res.status(400).json({
+        error: "Code, discount percentage, and expiry date are required.",
+      });
+    }
+
+    const cleanCode = String(code).trim().toUpperCase();
+    const discount = parseFloat(discount_percentage);
+
+    // Hard ceiling safety check: max 10%
+    if (isNaN(discount) || discount <= 0 || discount > 10.0) {
+      return res.status(400).json({
+        error: "Discount percentage must be between 1% and 10%.",
+      });
+    }
+
+    const startDate = valid_from
+      ? new Date(valid_from).toISOString()
+      : new Date().toISOString();
+    const expiryDate = new Date(valid_until).toISOString();
+
+    if (new Date(expiryDate) <= new Date(startDate)) {
+      return res.status(400).json({
+        error: "Expiry date must be set after the start date.",
+      });
+    }
+
+    const { data: promo, error } = await supabase
+      .from("promo_codes")
+      .insert({
+        code: cleanCode,
+        discount_percentage: discount,
+        valid_from: startDate,
+        valid_until: expiryDate,
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === "23505") {
+        return res
+          .status(409)
+          .json({ error: "A promo code with this name already exists." });
+      }
+      throw error;
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: `Promo code ${promo.code} created successfully!`,
+      promo,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/admin/promos/:id/toggle — Enable/Disable a promo code
+router.patch("/promos/:id/toggle", async (req, res) => {
+  try {
+    const { is_active } = req.body;
+
+    const { data: promo, error } = await supabase
+      .from("promo_codes")
+      .update({ is_active: Boolean(is_active) })
+      .eq("id", req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return res.json({
+      success: true,
+      message: `Promo code ${promo.code} is now ${promo.is_active ? "active" : "disabled"}.`,
+      promo,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

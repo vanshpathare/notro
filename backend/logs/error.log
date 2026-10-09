@@ -158,3 +158,14 @@
 {"level":"error","message":"sendMobileOtp | 8788871222 | RATE_LIMIT_EXCEEDED"}
 {"level":"error","message":"getNoteById | 9a33066a-e6b7-4a2c-98c8-d5a8e441b97f | NOTE_NOT_FOUND"}
 {"level":"error","message":"getMyProfile | bd87b5d5-3446-4eef-a423-8c43eae61e1d | TypeError: fetch failed"}
+{"level":"error","message":"verifyMobileOtp | 9856312548 | OTP_NOT_FOUND"}
+{"level":"error","message":"sendMobileOtp | 9856312548 | OTP_COOLDOWN_ACTIVE"}
+{"level":"error","message":"verifyMobileOtp | 9856312548 | OTP_NOT_FOUND"}
+{"level":"error","message":"sendMobileOtp | 9856312548 | OTP_COOLDOWN_ACTIVE"}
+{"level":"error","message":"verifyMobileOtp | 7856996523 | otpRecord is not defined"}
+{"level":"error","message":"verifyMobileOtp | 7856996523 | otpRecord is not defined"}
+{"level":"error","message":"verifyMobileOtp | 7856996523 | otpRecord is not defined"}
+{"level":"error","message":"sendMobileOtp | 9985278542 | RATE_LIMIT_EXCEEDED"}
+{"level":"error","message":"sendMobileOtp | 9985278542 | RATE_LIMIT_EXCEEDED"}
+{"level":"error","message":"verifyEmailAndRegister | yash@gmail.com | EMAIL_OTP_INVALID"}
+{"level":"error","message":"getNotes | TypeError: fetch failed"}

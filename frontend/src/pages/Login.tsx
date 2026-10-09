@@ -8,9 +8,11 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
+    const isValidPhone = /^[6-9]\d{9}$/.test(phone);
+
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (phone.length !== 10) {
+        if (!isValidPhone) {
             setError('Enter a valid 10-digit mobile number');
             return;
         }
@@ -76,6 +78,17 @@ export default function Login() {
                                 }}
                             />
                         </div>
+
+                        {!isValidPhone && (
+                            <div style={{ 
+                                fontSize: '0.8rem', 
+                                color: '#666', 
+                                marginTop: 6, 
+                                marginLeft: 4 
+                            }}>
+                                Enter a valid 10-digit number
+                            </div>
+                        )}
                     </div>
 
                     {error && (
@@ -86,7 +99,7 @@ export default function Login() {
 
                     <button
                         type="submit"
-                        disabled={isLoading || phone.length !== 10}
+                        disabled={isLoading || !isValidPhone}
                         style={{
                             width: '100%',
                             background: '#1A73E8',
@@ -96,8 +109,8 @@ export default function Login() {
                             borderRadius: 12,
                             fontWeight: 600,
                             fontSize: '1rem',
-                            cursor: 'pointer',
-                            opacity: isLoading || phone.length !== 10 ? 0.7 : 1
+                            cursor: isLoading || !isValidPhone ? 'not-allowed' : 'pointer',
+                            opacity: isLoading || !isValidPhone ? 0.6 : 1
                         }}
                     >
                         {isLoading ? 'Sending...' : 'Send OTP'}

@@ -23,13 +23,23 @@ const sendOtp = async (phone) => {
   // Check if banned
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_banned")
+    .select("is_banned, deletion_type")
     .eq("phone", phone)
     .maybeSingle();
 
   if (profile?.is_banned && profile?.deletion_type === "admin_banned") {
     throw new Error("ACCOUNT_BANNED");
   }
+
+  // 2. Cooldown check — ensure at least 60 seconds since last OTP
+  const oneMinuteAgo = new Date(Date.now() - 30 * 1000).toISOString();
+  const { count: recentCount } = await supabase
+    .from("otps")
+    .select("*", { count: "exact", head: true })
+    .eq("phone", phone)
+    .gte("created_at", oneMinuteAgo);
+
+  if (recentCount > 0) throw new Error("OTP_COOLDOWN_ACTIVE");
 
   // Rate limit — max 3 OTPs per 10 minutes per phone
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -55,7 +65,10 @@ const sendOtp = async (phone) => {
 
   if (dbError) throw dbError;
 
-  if (process.env.NODE_ENV === "development") {
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.SEND_REAL_OTP !== "true"
+  ) {
     console.log(`[DEV] OTP for ${phone}: ${otpCode}`);
   } else {
     await sendWhatsAppOTP(phone, otpCode);
@@ -73,26 +86,46 @@ const verifyOtp = async (phone, code, clientInfo = {}) => {
   const deviceName = clientInfo.deviceName || "Android Phone";
   const forceLogin = Boolean(clientInfo.forceLogin);
 
-  const { data: otpRecord, error } = await supabase
+  const now = new Date().toISOString();
+
+  const { data: activeOtps, error } = await supabase
     .from("otps")
     .select("*")
     .eq("phone", phone)
     .eq("is_used", false)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .gt("expires_at", now)
+    .order("created_at", { ascending: false });
 
-  if (error || !otpRecord) throw new Error("OTP_NOT_FOUND");
-  if (otpRecord.attempts >= 5) throw new Error("MAX_ATTEMPTS");
-  if (Date.now() > new Date(otpRecord.expires_at).getTime())
-    throw new Error("OTP_EXPIRED");
+  if (error) {
+    console.error("Supabase OTP fetch error:", error);
+  }
 
-  const isMatch = await bcrypt.compare(code, otpRecord.code);
-  if (!isMatch) {
+  // 🟢 REPLACE WITH THIS BLOCK:
+  if (error || !activeOtps || activeOtps.length === 0) {
+    throw new Error("OTP_NOT_FOUND");
+  }
+
+  // Rate limit attempts on the latest generated OTP
+  if (activeOtps[0].attempts >= 5) {
+    throw new Error("MAX_ATTEMPTS");
+  }
+
+  // Check if entered code matches ANY active 10-minute OTP
+  let matchedRecord = null;
+  for (const record of activeOtps) {
+    const isMatch = await bcrypt.compare(code, record.code);
+    if (isMatch) {
+      matchedRecord = record;
+      break;
+    }
+  }
+
+  // If code didn't match any active OTP, increment attempt on the newest one
+  if (!matchedRecord) {
     await supabase
       .from("otps")
-      .update({ attempts: otpRecord.attempts + 1 })
-      .eq("id", otpRecord.id);
+      .update({ attempts: activeOtps[0].attempts + 1 })
+      .eq("id", activeOtps[0].id);
     throw new Error("OTP_INVALID");
   }
 
@@ -141,11 +174,12 @@ const verifyOtp = async (phone, code, clientInfo = {}) => {
       };
     }
 
+    // 🟢 CHANGE TO:
     await supabase
       .from("otps")
       .update({ is_used: true })
-      .eq("id", otpRecord.id);
-
+      .eq("phone", phone)
+      .eq("is_used", false);
     let appSessionId = null;
 
     if (isApp) {
@@ -172,7 +206,12 @@ const verifyOtp = async (phone, code, clientInfo = {}) => {
   }
 
   // 🟢 Mark OTP as used for new users
-  await supabase.from("otps").update({ is_used: true }).eq("id", otpRecord.id);
+  // 🟢 CHANGE TO:
+  await supabase
+    .from("otps")
+    .update({ is_used: true })
+    .eq("phone", phone)
+    .eq("is_used", false);
 
   // New user — clean up any ghost auth users for this phone before proceeding
   // This handles the case where someone abandoned registration halfway
@@ -285,6 +324,13 @@ const completeEmailVerification = async (
     platform === "app" || platform === "android" || platform === "ios";
 
   const { account_type } = registrationData;
+
+  if (
+    registrationData.terms_accepted !== true &&
+    registrationData.terms_accepted !== "true"
+  ) {
+    throw new Error("TERMS_ACCEPTANCE_REQUIRED");
+  }
 
   // ── Validate account type ──
   if (!["student", "business", "youtube"].includes(account_type)) {
@@ -421,6 +467,8 @@ const completeEmailVerification = async (
         is_seller: account_type !== "student",
         verification_status:
           account_type === "student" ? "approved" : "pending",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
         ...(isApp
           ? { app_session_id: appSessionId, app_device_name: deviceName }
           : {}),
@@ -459,6 +507,8 @@ const completeEmailVerification = async (
         name: primaryName,
         account_type: account_type === "youtube" ? "creator" : account_type,
         extra_details: extraDetails,
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
       },
     });
 
@@ -501,6 +551,8 @@ const completeEmailVerification = async (
         is_banned: false,
         verification_status:
           account_type === "student" ? "approved" : "pending",
+        terms_accepted: true,
+        terms_accepted_at: new Date().toISOString(),
       })
       .select()
       .single();

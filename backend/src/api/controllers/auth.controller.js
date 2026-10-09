@@ -26,6 +26,21 @@ const sendMobileOtp = async (req, res) => {
       return res
         .status(429)
         .json({ error: "Too many OTP requests. Wait 10 minutes." });
+
+    if (
+      err.message === "SMS_GATEWAY_ERROR" ||
+      err.message === "WHATSAPP_DELIVERY_FAILED"
+    ) {
+      return res.status(502).json({
+        error: "Failed to deliver WhatsApp message. Please try again later.",
+      });
+    }
+    if (err.message === "OTP_COOLDOWN_ACTIVE") {
+      return res.status(429).json({
+        error: "Please wait 30 seconds before requesting another code.",
+      });
+    }
+
     return res.status(500).json({ error: "Failed to send OTP" });
   }
 };
@@ -151,6 +166,17 @@ const verifyEmailAndRegister = async (req, res) => {
         .json({ error: "All registration fields are required" });
     }
 
+    if (
+      registrationData.terms_accepted !== true &&
+      registrationData.terms_accepted !== "true"
+    ) {
+      return res
+        .status(400)
+        .json({
+          error: "You must agree to the Terms of Service to create an account.",
+        });
+    }
+
     const platform =
       req.body.platform || req.headers["x-client-platform"] || "web";
     const clientDevice =
@@ -180,6 +206,10 @@ const verifyEmailAndRegister = async (req, res) => {
   } catch (err) {
     logger.error(`verifyEmailAndRegister | ${req.body.email} | ${err.message}`);
     const map = {
+      TERMS_ACCEPTANCE_REQUIRED: [
+        400,
+        "You must agree to the Terms of Service to create an account.",
+      ],
       INVALID_ACCOUNT_TYPE: [400, "Invalid account type selected"],
       NAME_REQUIRED: [400, "Name is required"],
       COLLEGE_REQUIRED_FOR_STUDENTS: [
@@ -227,7 +257,7 @@ const reactivateAccount = async (req, res) => {
     const platform =
       req.body.platform || req.headers["x-client-platform"] || "web";
     const clientDevice =
-      deviceName || req.headers["x-device-name"] || "Mobile Device";
+      req.body.deviceName || req.headers["x-device-name"] || "Mobile Device";
 
     const result = await authService.reactivateAccount(
       reactivationToken,

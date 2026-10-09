@@ -6,6 +6,7 @@ const {
   verifyPayment,
   webhook,
   getMyPurchases,
+  validatePromo,
 } = require("../controllers/payment.controller");
 
 // Webhook — NO auth, Razorpay calls this directly
@@ -15,6 +16,7 @@ router.post("/webhook", webhook);
 router.use(verifyAuthSession);
 router.post("/create-order", createOrder);
 router.post("/verify", verifyPayment);
+router.post("/validate-promo", validatePromo);
 router.get("/my-purchases", getMyPurchases);
 
 module.exports = router;

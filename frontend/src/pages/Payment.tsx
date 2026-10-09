@@ -12,6 +12,17 @@ export default function Payment() {
     const [note, setNote] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
+    // Promo Code States
+    const [promoInput, setPromoInput] = useState('');
+    const [appliedPromo, setAppliedPromo] = useState<{
+        code: string;
+        discountPercentage: number;
+        discountAmount: number;
+        finalPrice: number;
+    } | null>(null);
+    const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+    const [promoError, setPromoError] = useState<string | null>(null);
+
     useEffect(() => {
         const fetchNote = async () => {
             setIsLoading(true);
@@ -34,6 +45,32 @@ export default function Payment() {
             fetchNote();
         }
     }, [id]);
+
+    const handleApplyPromo = async () => {
+        if (!promoInput.trim()) return;
+        setIsValidatingPromo(true);
+        setPromoError(null);
+
+        try {
+            const res = await api.post('/payments/validate-promo', {
+                code: promoInput.trim(),
+                noteId: id
+            });
+            // Overwrites any existing promo code — guarantees NO stacking
+            setAppliedPromo(res.data);
+            setPromoInput('');
+        } catch (err: any) {
+            setPromoError(err.response?.data?.error || 'Invalid promo code');
+            setAppliedPromo(null);
+        } finally {
+            setIsValidatingPromo(false);
+        }
+    };
+
+    const handleRemovePromo = () => {
+        setAppliedPromo(null);
+        setPromoError(null);
+    };
 
     // const handleRazorpayPayment = async () => {
     //     setIsCreatingOrder(true);
@@ -99,7 +136,9 @@ export default function Payment() {
 
         try {
             // 1. Create order on backend (using correct noteId key)
-            const res = await api.post('/payments/create-order', { noteId: id });
+            const res = await api.post('/payments/create-order', { noteId: id,
+                promoCode: appliedPromo?.code || null
+             });
             const { orderId, keyId, amount } = res.data.order;
 
             const options = {
@@ -153,6 +192,9 @@ export default function Payment() {
         );
     }
 
+    const originalPrice = Math.round(note?.price || 0);
+    const finalPayable = appliedPromo ? appliedPromo.finalPrice : originalPrice;
+
     return (
         <div style={{ maxWidth: 600, margin: '40px auto', padding: '0 16px' }}>
             <Link to={`/notes/${id}`} style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none', display: 'inline-block', marginBottom: 20 }}>
@@ -170,11 +212,84 @@ export default function Payment() {
                     
                     <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 700, fontSize: '1.05rem' }}>Total</span>
-                        <span style={{ fontWeight: 800, fontSize: '1.4rem', color: 'var(--primary)' }}>₹{Math.round(note?.price || 0)}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.95rem' }}>
+                      <span>Listing Price</span>
+                      <span>₹{originalPrice}</span>
+                  </div>
+
+                  {appliedPromo && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#137333', fontWeight: 600, marginBottom: 8, fontSize: '0.95rem' }}>
+                          <span>Promo ({appliedPromo.code} - {appliedPromo.discountPercentage}%)</span>
+                          <span>-₹{appliedPromo.discountAmount}</span>
+                      </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                        <span style={{ fontWeight: 700, fontSize: '1.05rem' }}>Total Payable</span>
+                      {/* 🟢 8. Dynamic total reflecting discount */}
+                      <span style={{ fontWeight: 800, fontSize: '1.4rem', color: 'var(--primary)' }}>₹{finalPayable}</span>
                     </div>
+
+                    
                 </div>
+
+             {/* 🟢 9. Promo code input box and toggle view */}
+              <div style={{ marginBottom: 24 }}>
+                  {!appliedPromo ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                         <input
+                              type="text"
+                              placeholder="Enter Promo Code"
+                              value={promoInput}
+                              onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                              style={{
+                                  flex: 1,
+                                 padding: '12px 14px',
+                                 borderRadius: 10,
+                                 border: '1px solid var(--border, #ddd)',
+                                  fontSize: '0.95rem',
+                                  outline: 'none',
+                                  textTransform: 'uppercase'
+                              }}
+                          />
+                          <button
+                              type="button"
+                              onClick={handleApplyPromo}
+                              disabled={isValidatingPromo || !promoInput.trim()}
+                              style={{
+                                  padding: '0 20px',
+                                  borderRadius: 10,
+                                  border: 'none',
+                                  background: '#111',
+                                  color: '#fff',
+                                 fontWeight: 600,
+                                  cursor: isValidatingPromo || !promoInput.trim() ? 'not-allowed' : 'pointer',
+                                 opacity: isValidatingPromo || !promoInput.trim() ? 0.6 : 1
+                              }}
+                          >
+                              {isValidatingPromo ? 'Checking...' : 'Apply'}
+                          </button>
+                      </div>
+                  ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#E6F4EA', padding: '10px 14px', borderRadius: 10 }}>
+                          <span style={{ color: '#137333', fontWeight: 600, fontSize: '0.9rem' }}>
+                              ✓ Code <strong>{appliedPromo.code}</strong> applied ({appliedPromo.discountPercentage}% off)
+                          </span>
+                          <button
+                              type="button"
+                              onClick={handleRemovePromo}
+                              style={{ background: 'none', border: 'none', color: '#EA4335', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}
+                          >
+                              Remove
+                          </button>
+                      </div>
+                  )}
+                  {promoError && (
+                      <p style={{ color: '#EA4335', fontSize: '0.82rem', margin: '6px 0 0 4px', fontWeight: 500 }}>
+                          {promoError}
+                      </p>
+                  )}
+              </div>
 
                 {error && (
                     <div style={{ background: 'var(--error-container, #FDE8E8)', color: 'var(--error, #EA4335)', padding: 12, borderRadius: 8, fontSize: '0.85rem', marginBottom: 20, fontWeight: 600 }}>
@@ -188,7 +303,7 @@ export default function Payment() {
                     className="btn-primary"
                     style={{ width: '100%', marginBottom: 16 }}
                 >
-                    {isCreatingOrder ? 'Processing...' : `Pay ₹${Math.round(note?.price || 0)} with Razorpay`}
+                    {isCreatingOrder ? 'Processing...' : `Pay ₹${finalPayable} with Razorpay`}
                 </button>
 
                 <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>

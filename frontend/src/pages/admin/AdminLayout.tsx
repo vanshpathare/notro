@@ -110,6 +110,7 @@ export default function AdminLayout() {
             <NavLink to="/admin/orphans" style={({ isActive }) => linkStyle(isActive)}>
               🗑️ Orphan Files
             </NavLink>
+            <NavLink to="/admin/promos">Promos</NavLink>
           </nav>
         </div>
 

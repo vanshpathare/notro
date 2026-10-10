@@ -491,7 +491,7 @@ const getPreviewUrl = async (req, res) => {
   try {
     const { data: note, error } = await supabase
       .from("notes")
-      .select("id, r2_key, preview_r2_key, preview_pages, status")
+      .select("id, preview_r2_key, preview_pages, status")
       .eq("id", req.params.id)
       .eq("status", "approved")
       .eq("is_deleted", false)
@@ -506,20 +506,22 @@ const getPreviewUrl = async (req, res) => {
         .json({ error: "No preview available for this note" });
     }
 
-    // Use the pre-extracted preview file — never expose the full PDF
     if (!note.preview_r2_key) {
       return res.status(404).json({
         error: "Preview not yet generated for this note",
       });
     }
 
-    const previewUrl = await R2Service.generateDownloadUrl(note.preview_r2_key);
+    // If stored as a full URL (new format), return directly.
+    // Otherwise fallback to building the URL from R2_PUBLIC_URL.
+    const previewUrl = note.preview_r2_key.startsWith("http")
+      ? note.preview_r2_key
+      : `${process.env.R2_PUBLIC_URL}/${note.preview_r2_key}`;
 
     return res.json({
       success: true,
       previewUrl,
       preview_pages: note.preview_pages,
-      expiresIn: 60,
     });
   } catch (err) {
     logger.error(`getPreviewUrl | ${req.params.id} | ${err.message}`);

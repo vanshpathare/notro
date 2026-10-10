@@ -304,7 +304,7 @@ const processAiReviewJob = async (jobData) => {
 
     // Step 3: Run AI scoring via File URI with strict JSON enforcement
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-3.1-flash-lite",
       generationConfig: {
         temperature: 0.1,
         maxOutputTokens: 1000,
@@ -438,7 +438,7 @@ const processMemoryQueue = async () => {
     );
   } finally {
     isMemoryProcessing = false;
-    setImmediate(processMemoryQueue);
+    setImmediate(processMemoryQueue, 4000);
   }
 };
 

@@ -144,14 +144,14 @@ const uploadPreviewPdf = async (noteId, previewBuffer) => {
   const key = `previews/${noteId}.pdf`;
 
   const command = new PutObjectCommand({
-    Bucket: BUCKET,
+    Bucket: process.env.R2_PUBLIC_BUCKET_NAME,
     Key: key,
     Body: previewBuffer,
     ContentType: "application/pdf",
   });
 
   await r2.send(command);
-  return key;
+  return `${process.env.R2_PUBLIC_URL}/${key}`;
 };
 
 // ─────────────────────────────────────
